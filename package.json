@@ -9,3 +9,5 @@
     "morgan": "^1.6.1"
   }
 }
+//npm install -g nodemon 
+// nodemon server.js

@@ -14,8 +14,7 @@ var Doctor = require('./app/models/doctor');
 
 var uristring = process.env.MONGOLAB_URI || 
   				process.env.MONGOHQ_URL  || 
-  				//'mongodb://localhost/HelloMongoose';
-  				'mongodb://dctapp_1gg9l9fb:Doctor@pp@123@ds047632.mongolab.com:47632/heroku_1gg9l9fb';
+  				'mongodb://localhost/HelloMongoose';
   				
     
 // =======================
@@ -23,11 +22,11 @@ var uristring = process.env.MONGOLAB_URI ||
 // =======================
 var port = process.env.PORT || 8080;   // used to create, sign, and verify tokens
 //mongoose.connect(config.database);     // Conecta com base de dados... 
-mongoose.connect(uristring, function (err, res) {
+mongoose.connect(config.database, function (err, res) {
   if (err) { 
-    console.log ('ERROR connecting to: ' + uristring + '. ' + err);
+    console.log ('ERROR connecting to: ' + config.database + '. ' + err);
   } else {
-    console.log ('Succeeded connected to: ' + uristring);
+    console.log ('Succeeded connected to: ' + config.database);
   }
 });
 
@@ -47,7 +46,7 @@ app.use(morgan('dev'));
 // =================================================================
 // routes ==========================================================
 // =================================================================
-app.get('/setup', function(req, res) {
+/*app.get('/setup', function(req, res) {
 
 	var newDoc = {};
 
@@ -112,7 +111,7 @@ app.get('/setup', function(req, res) {
 
 	res.json({ success: true });
 
-});
+});*/
 
 app.get('/api', function(req, res){
 	res.json({ success: true });
