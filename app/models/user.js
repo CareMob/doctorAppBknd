@@ -1,10 +1,12 @@
-// get an instance of mongoose and mongoose.Schema
+// Pega as instancias de mongoose and mongoose.Schema
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-// set up a mongoose model and pass it using module.exports
+// Seta um modelo ('tabela') atribuindo ao module.exports
 module.exports = mongoose.model('User', new Schema({ 
-    name: String, 
+	appuserID: String,
+    name: String,     
     password: String, 
-    admin: Boolean 
+    admin: Boolean,
+    active: Boolean
 }));
