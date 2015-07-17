@@ -1,0 +1,23 @@
+===========================================================
+========================= MONGODB ========================= 
+===========================================================
+1 - Instalar Mongodb.msi no C:\mongoDB
+
+Abrir prompt comando 
+//Criar estrutura de banco local....
+2 - exec 'mkdir data\db'
+3 - exec 'cd c:\mongoDB\bin'
+//Executar server do mongodb.....
+4 - exec 'mongod'
+
+//Abrir novo cmd para criar banco local:
+5 - Idem passo 3
+6 - exec 'mongo'
+6 - exec 'show dbs'
+7 - exec 'use <NOME_BANCO>'
+8 - exec 'db'
+
+
+===========================================================
+========================== MySql ==========================
+===========================================================
