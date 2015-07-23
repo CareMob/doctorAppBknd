@@ -30,21 +30,21 @@ String.prototype.toProperCase = function () {
 // =====================================================================================================================
 
 
-var uristring = process.env.MONGOLAB_URI || 
+/*var uristring = process.env.MONGOLAB_URI || 
   				process.env.MONGOHQ_URL  || 
-  				'mongodb://dctapp_1gg9l9fb:Doctor@pp@123@ds047632.mongolab.com:47632/heroku_1gg9l9fb';
-
+  				'mongodb://127.0.0.1/doctordblocal';
+*/
     
 // =======================
 // configuration =========
 // =======================
 var port = process.env.PORT || 8080;   // used to create, sign, and verify tokens
 // Conecta com base de dados... 
-mongoose.connect(uristring, function (err, res) {
+mongoose.connect(config.database, function (err, res) {
   if (err) { 
-    res.send('ERROR connecting to: ' + uristring + '. ' + err);
+    console.log ('ERROR connecting to: ' + config.database + '. ' + err);
   } else {
-    res.send('Succeeded connected to: ' + uristring);
+    console.log ('Succeeded connected to: ' + config.database);
   }
 });
 
@@ -148,7 +148,9 @@ apiRoutes.get('/setup', cors(), function(req, res){
 		contadorSpec++;
 		newSpec = new Speciality({description: 'Psiquiatria'});
 	   	newSpec.save(function(err) {
-			if (err) throw res.json({Error: 'Erro ao salvar especialidades'});		
+			if (err){
+				res.json(err)
+			};		
 			contadorSpec++;
 			res.json({Especialides: contadorSpec})
 			console.log('Salvao com sucesso.');
