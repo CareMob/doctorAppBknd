@@ -134,13 +134,13 @@ apiRoutes.use(function(req, res, next) {
 // Rotas autenticadas...... 
 
 
-apiRoutes.get('/conn', function(req, res, next()){
+apiRoutes.get('/conn', function(req, res, next){
 	res.json({ success: true,
 			   connected: connStatus });
 });
 
 
-apiRoutes.get('/setup', function(req, res, next()){
+apiRoutes.get('/setup', function(req, res, next){
 	var newSpec = {},
 	    contadorSpec = 0,
 	    contMedico   = 0,
