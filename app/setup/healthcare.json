@@ -1,0 +1,6 @@
+[
+	{description: "Unimed",  active: true},
+	{description: "Fatima Saude",  active: true},
+	{description: "Circulo Operário",  active: true},
+	{description: "IPAM",  active: true}
+]
