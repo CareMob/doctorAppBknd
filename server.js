@@ -146,8 +146,8 @@ apiRoutes.get('/setup', function(req, res, next){
 	    contMedico   = 0,
 	    specialities = require('./app/setup/speciality.json');
 
-	//specialities.forEach(function(element, index, array){
-		contadorSpec++;
+	specialities.forEach(function(element, index, array){
+		//contadorSpec++;
 		newSpec = new Speciality({description: 'Psiquiatria'});
 	   	newSpec.save(function(err) {
 			if (err){
@@ -157,10 +157,10 @@ apiRoutes.get('/setup', function(req, res, next){
 			res.json({Especialides: contadorSpec})
 			console.log('Salvao com sucesso.');
 		});
-	//}); 
+	}); 
 
 
-	/*Speciality.findOne({"description": "Psiquiatria"}, function(err, specs) {		
+	Speciality.findOne({"description": "Psiquiatria"}, function(err, specs) {		
 		var Medico = new Person({"name": "Leonardo",
 			                 "lastname": "Prates de Lima",  
 			                   "cardId": 27123822000116, //CPF/CNPJ
@@ -170,7 +170,7 @@ apiRoutes.get('/setup', function(req, res, next){
 			                             "ranking": 4,
 			                              "adress": "Rua Moreira César, 2400",  
 			                             "contact": 5432029000,
-			                          "speciality": spec, // embedded document
+			                          "speciality": specs, // embedded document
 			                         //"healthCare": hCare // embedded document
 			         					}
 			     		});     
@@ -183,7 +183,7 @@ apiRoutes.get('/setup', function(req, res, next){
 	});
 
 	res.json([{Especialides: contadorSpec},
-		     {Medicos: contMedico}]);*/
+		     {Medicos: contMedico}]);
 
 });
 
