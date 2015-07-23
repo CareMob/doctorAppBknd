@@ -144,17 +144,19 @@ apiRoutes.get('/setup', cors(), function(req, res){
 	    contMedico   = 0,
 	    specialities = require('./app/setup/speciality.json');
 
-	specialities.forEach(function(element, index, array){
+	//specialities.forEach(function(element, index, array){
 		contadorSpec++;
-		newSpec = new Speciality({description: element.description.toProperCase()});
+		newSpec = new Speciality({description: 'Psiquiatria'});
 	   	newSpec.save(function(err) {
-			if (err) throw err;		
+			if (err) throw res.json(err);		
 			contadorSpec++;
+			res.json({Especialides: contadorSpec})
+			console.log('Salvao com sucesso.');
 		});
-	}); 
+	//}); 
 
 
-	Speciality.findOne({"description": "Psiquiatria"}, function(err, specs) {		
+	/*Speciality.findOne({"description": "Psiquiatria"}, function(err, specs) {		
 		var Medico = new Person({"name": "Leonardo",
 			                 "lastname": "Prates de Lima",  
 			                   "cardId": 27123822000116, //CPF/CNPJ
@@ -177,7 +179,7 @@ apiRoutes.get('/setup', cors(), function(req, res){
 	});
 
 	res.json([{Especialides: contadorSpec},
-		     {Medicos: contMedico}]);
+		     {Medicos: contMedico}]);*/
 
 });
 
