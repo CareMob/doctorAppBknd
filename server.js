@@ -6,7 +6,7 @@ var app         = express();
 var bodyParser  = require('body-parser');
 var morgan      = require('morgan');
 var mongoose    = require('mongoose');
-var cors 		= require('cors');
+//var cors 		= require('cors');
 
 var jwt    = require('jsonwebtoken');  // used to create, sign, and verify tokens
 var config = require('./app/config');  // get our config file
@@ -39,12 +39,13 @@ String.prototype.toProperCase = function () {
 // configuration =========
 // =======================
 var port = process.env.PORT || 8080;   // used to create, sign, and verify tokens
+var connStatus = "";
 // Conecta com base de dados... 
 mongoose.connect(config.database, function (err, res) {
   if (err) { 
-    console.log ('ERROR connecting to: ' + config.database + '. ' + err);
+    connStatus = 'ERROR connecting to: ' + config.database + '. ' + err;
   } else {
-    console.log ('Succeeded connected to: ' + config.database);
+    connStatus = 'Succeeded connected to: ' + config.database;
   }
 });
 
@@ -64,7 +65,7 @@ app.use(morgan('dev'));
 
 // basic route (http://localhost:8080)
 app.get('/', function(req, res) {
-	res.send(' :) API Aplicativo doctorApp - rodando OK ;p ');
+	res.send(' :) API Aplicativo doctorApp - rodando OK: Conexão: ' + connStatus);
 });
 
 // ---------------------------------------------------------
@@ -133,12 +134,13 @@ apiRoutes.use(function(req, res, next) {
 // Rotas autenticadas...... 
 
 
-apiRoutes.get('/api', cors(), function(req, res){
-	res.json({ success: true });
+apiRoutes.get('/conn', function(req, res, next()){
+	res.json({ success: true,
+			   connected: connStatus });
 });
 
 
-apiRoutes.get('/setup', cors(), function(req, res){
+apiRoutes.get('/setup', function(req, res, next()){
 	var newSpec = {},
 	    contadorSpec = 0,
 	    contMedico   = 0,
@@ -187,7 +189,7 @@ apiRoutes.get('/setup', cors(), function(req, res){
 
 
 // Pega todos os medicos no DB
-apiRoutes.get('/doctors', cors(), function(req, res, next) {
+apiRoutes.get('/doctors', function(req, res, next) {
 	Person.find({'doctor': {'$exists': true} }, function(err, doctors) {
 		res.json(doctors); 
 	});
