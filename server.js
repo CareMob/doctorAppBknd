@@ -9,13 +9,16 @@ var mongoose    = require('mongoose');
 //var cors 		= require('cors');
 
 var jwt    = require('jsonwebtoken');  // used to create, sign, and verify tokens
-var config = require('./app/config');  // get our config file
+var config = require('./config/config');  // get our config file
+
 // get our mongoose models -- Criar novo arquivo :) 
 var User        = require('./app/models/user'); 
 var Doctor      = require('./app/models/doctor');
+var Test	    = require('./app/models/doctor');
 var Speciality  = require('./app/models/speciality');
 var Person      = require('./app/models/person');
 var Appointment = require('./app/models/appointment');
+var Schedule    = require('./app/models/schedule');
 
 
 
@@ -49,7 +52,7 @@ mongoose.connect(config.database, function (err, res) {
   }
 });
 
-
+app.use(express.static(__dirname + '/public'));                 // set the static files location /public/img will be /img for users
 app.set('superSecret', config.secret); // secret variable
 
 // use body parser so we can get info from POST and/or URL parameters
@@ -66,6 +69,11 @@ app.use(morgan('dev'));
 // basic route (http://localhost:8080)
 app.get('/', function(req, res) {
 	res.send(' :) API Aplicativo doctorApp - rodando OK: Conexão: ' + connStatus);
+});
+
+// basic route (http://localhost:8080)
+app.get('/dashboard', function(req, res) {
+	res.sendfile('./public/index.html');
 });
 
 // ---------------------------------------------------------
@@ -146,44 +154,124 @@ apiRoutes.get('/setup', function(req, res, next){
 	    contMedico   = 0,
 	    specialities = require('./app/setup/speciality.json');
 
-	specialities.forEach(function(element, index, array){
+	/*specialities.forEach(function(element, index, array){
 		//contadorSpec++;
-		newSpec = new Speciality({description: 'Psiquiatria'});
+		newSpec = new Speciality({description: element.description.toProperCase()});
 	   	newSpec.save(function(err) {
 			if (err){
 				res.json(err)
 			};		
 			contadorSpec++;
-			res.json({Especialides: contadorSpec})
-			console.log('Salvao com sucesso.');
-		});
-	}); 
+			//res.json({Especialides: contadorSpec})
+			//console.log('Salvao com sucesso.');
+		}); 
+	}); */
 
-
-	Speciality.findOne({"description": "Psiquiatria"}, function(err, specs) {		
-		var Medico = new Person({"name": "Leonardo",
-			                 "lastname": "Prates de Lima",  
-			                   "cardId": 27123822000116, //CPF/CNPJ
-			                   "userId": 5499652358, //Celular usuario/ID Medico  
-			                "verfifyID": "",         // Cod verificação do Numero de celular.  
-			                   "doctor": { "crmId": "014605",
+	//Speciality.findOne({"description": "PSIQUIATRIA"}, function(err, specs) {
+		var Medico = new Person({"name": "Marcelo",
+			                 "lastname": "Menegat",  
+			                   "cardId": 0, //CPF/CNPJ
+			                   "userId": 5499544269, //Celular usuario/ID Medico  
+			                "verfifyID": "70bd3af9118c47d6ab40add" //,         // Cod verificação do Numero de celular.  
+			                   /*"doctor": { "crmId": "014605",
 			                             "ranking": 4,
 			                              "adress": "Rua Moreira César, 2400",  
 			                             "contact": 5432029000,
-			                          "speciality": specs, // embedded document
+			                          "speciality": [specs] // embedded document
 			                         //"healthCare": hCare // embedded document
-			         					}
+			         					}*/
 			     		});     
 
 		Medico.save(function(err) {
-			if (err) throw err;	
-			contMedico++;
+			res.json(Medico);
+			//if (err) throw err;	
+			//contMedico++;
 		});
 
-	});
+	//});
 
-	res.json([{Especialides: contadorSpec},
-		     {Medicos: contMedico}]);
+	/*res.json([{Especialides: contadorSpec},
+		     {Medicos: contMedico}]);*/
+
+});
+
+apiRoutes.get('/setupSchedule', function(req, res, next){
+
+	var year         = 2015,
+    	month        = 08,
+    	hoursPerDay  = [{hour:'08:00'},{hour:'08:30'},{hour:'09:00'},{hour:'09:30'},{hour:'10:00'},{hour:'10:30'},{hour:'11:00'},{hour:'11:30'},
+    					{hour:'13:00'},{hour:'13:30'},{hour:'14:00'},{hour:'14:30'},{hour:'15:00'},{hour:'15:30'},{hour:'16:00'},{hour:'16:30'},{hour:'17:00'},{hour:'17:30'}],       
+        nDaysInMonth = new Date(year, month, 0).getDate(),
+        countD		 = 0,
+        scheduleDateAux = {};
+
+	var newSchedule = new Schedule();
+	newSchedule.doctor = '55c3eeb240c3f93c13faa201', //mongoose.Schema.Types.ObjectId('55c3eeb240c3f93c13faa201'); // Pompeu Schema.Types.ObjectId,
+    newSchedule.month  = 08;
+    newSchedule.year   = 2015;
+
+
+    /*Function DiaUtil(InformeData) As Integer
+	    DiaUtil = False    
+	    //Procura por Sábado ou Domingo.
+	    If WeekDay(InformeData) = 1 Or WeekDay(InformeData) = 7 Then
+	        DiaUtil = False
+	        // Procura por Feriados cadastrados na tabela tabFeriados.
+	    ElseIf IsNull(DLookup("Feriado", "tabFeriados", "[Feriado] = #" _
+	        & InformeData & "#")) Then
+	        DiaUtil = True
+	    End If    
+	End Function*/
+
+	/*function anoBissexto(ano) {
+    	return new Date(ano, 1, 29).getMonth() == 1
+	}*/
+
+    /*for (var make in data.cars) {
+    	//Add dias
+	    for (var model in data.cars[make]) {
+	    	//Add horas 
+	        var doors = data.cars[make][model].doors;
+	        alert(make + ', ' + model + ', ' + doors);
+	    }
+	}*/
+
+	//Cada dia da semana faz...
+	while(countD <= nDaysInMonth){
+		countD++;
+
+	  	newSchedule.scheduleDate.push({day : countD},
+	  								  {scheduleTime: hoursPerDay});
+	  	//newSchedule.scheduleDate.scheduleTime = hoursPerDay;
+
+	}
+
+	newSchedule.save(function(err){
+
+		res.json(newSchedule);
+
+	});
+	
+	
+   //res.json({nDaysInMonth : new Date(year, month, 0).getDate()});
+
+});
+
+
+
+
+
+// Add novos medicos no DB
+apiRoutes.post('/doctors', function(req, res, next) {
+
+	var doctor = new Person(req.body);
+	doctor.save(function(err) {
+		if (err){
+			//throw err;			
+			res.json(err);
+		} 			
+		res.json(doctor);
+	});
 
 });
 
@@ -195,13 +283,32 @@ apiRoutes.get('/doctors', function(req, res, next) {
 	});
 });
 
+// Add novos medicos no DB
+apiRoutes.post('/doctors', function(req, res, next) {
+
+	var doctor = new Person(req.body);
+	doctor.save(function(err) {
+		if (err){
+			//throw err;			
+			res.json(err);
+		} 			
+		res.json(doctor);
+	});
+
+	
+
+	/*Person.find({'doctor': {'$exists': true} }, function(err, doctors) {
+		res.json(doctors); 
+	});*/
+});
+
+
 // Pega todos as especialidades no DB
 apiRoutes.get('/specialities', function(req, res) {
 	Speciality.find({}, function(err, specs) {
 		res.json(specs);
 	});
 });
-
 
 // Cria nova consulta
 apiRoutes.post('/appointment', function(req, res){
@@ -242,6 +349,59 @@ apiRoutes.post('/appointment', function(req, res){
 			});*/
 		}); //Doctor		
 	}); 
+
+});
+
+apiRoutes.get('/consultas', function(req, res){
+
+	/*var _data = new Date(),
+		_mes  = _data.getMonth(),
+		_dia  = _data.getDay();
+
+	res.json({data: _data,
+		      mes: _mes,
+		      dia: _dia,
+		      teste: now.getTime() });*/
+
+
+
+
+var _user = {};
+	Person.findOne({'userId': 5499544269 }, function(err, user){
+		if(err) _user = {success: false};
+
+		Person.findOne({'doctor': {'$exists': true }}, function(err, doctor){
+			//res.json([user, doctor]);
+				
+			//res.json({nome: doctor.doctor.speciality._id});
+
+					
+			var newDoc  = new Appointment({    	
+			   doctorID: doctor._id,	
+			   //$push : {doctorID: doctor},
+			appointments: {dateTo: Date('2015-25-08'),
+			 			 isEnable: true,
+						   hoursTo: { hours: 0830,	
+						   	         person: user._id,
+					                   name: user.name,
+					             //speciality: specID,
+					               realized: false,
+					                 raking: 0,
+					           isHealthCare: false}
+		                }
+		            });
+
+			//newDoc.doctorID.$push(doctor);
+		    //newDoc.appointment.person.push(user);		    
+
+		    res.json(newDoc);
+		    /*newDoc.save(function(err) {
+				if (err) res.json(err) ;
+				res.json(newDoc);
+			});*/
+		}); //Doctor		
+	});
+
 
 });
 

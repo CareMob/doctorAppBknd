@@ -11,7 +11,9 @@ module.exports = mongoose.model('Person', new Schema({
 verfifyID: String, // Cod verificação do Numero de celular.  
    doctor: { crmId: String,
             ranking: Number,
-             adress: String,  
+            address: String,
+          cityState: String,    
+             cityId: String,             
             contact: Number,
          speciality: {},
          healthCare: {}
