@@ -197,64 +197,68 @@ apiRoutes.get('/setup', function(req, res, next){
 
 apiRoutes.get('/setupSchedule', function(req, res, next){
 
-	var year         = 2015,
-    	month        = 08,
-    	hoursPerDay  = [{hour:'08:00'},{hour:'08:30'},{hour:'09:00'},{hour:'09:30'},{hour:'10:00'},{hour:'10:30'},{hour:'11:00'},{hour:'11:30'},
-    					{hour:'13:00'},{hour:'13:30'},{hour:'14:00'},{hour:'14:30'},{hour:'15:00'},{hour:'15:30'},{hour:'16:00'},{hour:'16:30'},{hour:'17:00'},{hour:'17:30'}],       
-        nDaysInMonth = new Date(year, month, 0).getDate(),
-        countD		 = 0,
-        scheduleDateAux = {};
+   var year       = 2015,
+       month      = 08, 
+       inicialDay = 1,
+       finalDay   = 31,
+       appointmenDuration = 15,
+       startMorningTime = 8,
+       endMorningTime = 12,
+       startAfteernoonTime = 14,
+       endAfteernoonTime = 18
+       newSchedule = new Schedule();
+	   newSchedule.doctor = '55c3eeb240c3f93c13faa201', //mongoose.Schema.Types.ObjectId('55c3eeb240c3f93c13faa201'); // Pompeu Schema.Types.ObjectId,
+       newSchedule.month  = month;
+       newSchedule.year   = year
+       hoursPerDay  = [],
+       time    = startMorningTime,
+       minutes = 0,
+       fullTime = time;
 
-	var newSchedule = new Schedule();
-	newSchedule.doctor = '55c3eeb240c3f93c13faa201', //mongoose.Schema.Types.ObjectId('55c3eeb240c3f93c13faa201'); // Pompeu Schema.Types.ObjectId,
-    newSchedule.month  = 08;
-    newSchedule.year   = 2015;
+	while (fullTime <= endAfteernoonTime) {
+          
+		if ((time + (minutes / 100) + (appointmenDuration / 100)) < (time + 0.6) ){
+            minutes += appointmenDuration;
 
+	 	} else {
+	 		minutes += appointmenDuration - 60;
+    		time++;
+	 	}
 
-    /*Function DiaUtil(InformeData) As Integer
-	    DiaUtil = False    
-	    //Procura por Sábado ou Domingo.
-	    If WeekDay(InformeData) = 1 Or WeekDay(InformeData) = 7 Then
-	        DiaUtil = False
-	        // Procura por Feriados cadastrados na tabela tabFeriados.
-	    ElseIf IsNull(DLookup("Feriado", "tabFeriados", "[Feriado] = #" _
-	        & InformeData & "#")) Then
-	        DiaUtil = True
-	    End If    
-	End Function*/
+	 	fullTime = time + (minutes / 100);
 
-	/*function anoBissexto(ano) {
-    	return new Date(ano, 1, 29).getMonth() == 1
-	}*/
+	 	if (fullTime >= endMorningTime && fullTime < startAfteernoonTime) {
+	 		time = startAfteernoonTime;
+	 		minutes = 0;
+	 		fullTime = time;
+	 	}
 
-    /*for (var make in data.cars) {
-    	//Add dias
-	    for (var model in data.cars[make]) {
-	    	//Add horas 
-	        var doors = data.cars[make][model].doors;
-	        alert(make + ', ' + model + ', ' + doors);
+		if (fullTime < endAfteernoonTime){
+          var hours = new Object();
+          hours.hour = time + ":" + minutes;
+          hoursPerDay.push(hours);
+       }
+	
+    } 
+
+    
+    for (currenteDay = 0; currenteDay < 30; currenteDay++){
+
+        var appointmentDate = new Date(year,month,currenteDay);
+       //somente dias de semana
+        if (appointmentDate.getDay () > 0 && appointmentDate.getDay () < 6){
+
+            newSchedule.scheduleDate.push({day : currenteDay},
+	  		    						  {scheduleTime: hoursPerDay});
+
 	    }
-	}*/
-
-	//Cada dia da semana faz...
-	while(countD <= nDaysInMonth){
-		countD++;
-
-	  	newSchedule.scheduleDate.push({day : countD},
-	  								  {scheduleTime: hoursPerDay});
-	  	//newSchedule.scheduleDate.scheduleTime = hoursPerDay;
-
 	}
+    
 
 	newSchedule.save(function(err){
-
 		res.json(newSchedule);
-
 	});
 	
-	
-   //res.json({nDaysInMonth : new Date(year, month, 0).getDate()});
-
 });
 
 
