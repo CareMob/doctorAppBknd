@@ -216,8 +216,8 @@ apiRoutes.get('/setupSchedule', function(req, res, next){
        fullTime = time;
 
 	while (fullTime <= endAfteernoonTime) {
-          
-		if ((time + (minutes / 100) + (appointmenDuration / 100)) < (time + 0.6) ){
+
+		if ((minutes + appointmenDuration) < 60 ){
             minutes += appointmenDuration;
 
 	 	} else {
@@ -235,21 +235,31 @@ apiRoutes.get('/setupSchedule', function(req, res, next){
 
 		if (fullTime < endAfteernoonTime){
           var hours = new Object();
-          hours.hour = time + ":" + minutes;
+          var fomattedHour = '';
+
+          if (time < 10){
+          	fomattedHour = '0';
+          }
+          fomattedHour += time + ":";
+
+          if (minutes < 10){
+          	fomattedHour += '0';	
+          }
+          fomattedHour += minutes;
+          hours.hour = fomattedHour;
           hoursPerDay.push(hours);
        }
-	
     } 
 
     
     for (currenteDay = 0; currenteDay < 30; currenteDay++){
 
-        var appointmentDate = new Date(year,month,currenteDay);
+        var appointmentDate = new Date(year,month - 1,currenteDay );
        //somente dias de semana
         if (appointmentDate.getDay () > 0 && appointmentDate.getDay () < 6){
 
-            newSchedule.scheduleDate.push({day : currenteDay},
-	  		    						  {scheduleTime: hoursPerDay});
+            newSchedule.scheduleDate.push({day : currenteDay,
+	  		    						  scheduleTime: hoursPerDay});
 
 	    }
 	}

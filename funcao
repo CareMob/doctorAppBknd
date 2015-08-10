@@ -1,0 +1,41 @@
+
+function createCalendar(year, month, inicialDay, finalDay){
+
+   var appointmenDuration = 15;
+   var doctorID = 1;
+   var startMorningTime = 8;
+   var endMorningTime = 12;
+   var startAfteernoonTime = 14;
+   var endAfteernoonTime = 18;
+
+
+
+	for (day = 0; day < 30; day++){
+
+        var appointmentDate = new Date(year,month,day);
+
+        //somente dias de semana
+        if (appointmentDate.getDay () > 0 && appointmentDate.getDay () < 6){
+
+            var time = startMorningTime;
+            var minutes = 0;
+            var fullTime = time;
+			do {
+			 	if ((time + (minutes / 100) + appointmenDuration) < (time + 0.6) ){
+                    minutes += appointmenDuration;
+			 	} else {
+			 		minutes += appointmenDuration - 60;
+     		 		time += time + 1;
+			 	}
+
+			 	fullTime = time + (minutes / 100);
+
+				if (fullTime <= endMorningTime){
+                   //cria registro
+				}
+			
+			} while (fullTime <= endMorningTime)
+
+	    }
+	}
+}
