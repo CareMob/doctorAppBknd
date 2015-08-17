@@ -30,8 +30,7 @@
  *         }
  *
  *
- */
-
+ */ 
 angular.module( "ngAutocomplete", [])
   .directive('ngAutocomplete', function($parse) {
     return {
