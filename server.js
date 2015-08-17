@@ -198,7 +198,7 @@ apiRoutes.get('/setup', function(req, res, next){
 apiRoutes.get('/setupSchedule', function(req, res, next){
 
    var year       = 2015,
-       month      = 08, 
+       month      = 10, 
        inicialDay = 1,
        finalDay   = 31,
        appointmenDuration = 15,
@@ -265,17 +265,18 @@ apiRoutes.get('/setupSchedule', function(req, res, next){
 
 
 // Pega todos os horarios no DB
-apiRoutes.get('/schedule', function(req, res, next) {
+apiRoutes.post('/schedule', function(req, res, next) {
 
 	/**teste **/
-	var parShearch = {'dayIni' : 09,
-					'dayEnd'   : 11,
-					'monthIni' : 9,
-					'monthEnd' : 9,
+	var schdlGetFree = req.body,
+		parShearch = {'dayIni' : 01,
+					'dayEnd'   : 31,
+					'monthIni' : schdlGetFree.monthIni,
+					'monthEnd' : schdlGetFree.monthEnd,
 					'yearIni'  : 2015,
 					'yearEnd'  : 2015,
-					'doctor'   : '55c3eeb240c3f93c13faa201'}
-	/* ------------------------------------------- */
+					'doctor'   : schdlGetFree.doctorId}
+	/* ------------------------------------------- '55c3eeb240c3f93c13faa201' */
 	/*Schedule
 		scheduleDate
 			scheduleTime
@@ -286,8 +287,10 @@ apiRoutes.get('/schedule', function(req, res, next) {
 		testeReg = 0,
 		lgPaciente = 0,
 		freeTime = new Schedule();
+	// console.log("busca horarios");
+	
 
-	Schedule.find({'month'  : parShearch.monthIni,
+	Schedule.find({'month'  : {$gte: parShearch.monthIni, $lte: parShearch.monthEnd},
 				   'year'   : parShearch.yearIni,
 				   'doctor' : parShearch.doctor}, function(err, scheduleFind){		   	
 
@@ -309,6 +312,7 @@ apiRoutes.get('/schedule', function(req, res, next) {
 			   				} 						   				
 			   			});
 			   			schFree.push({'day' : result.day,
+			   						'month' : scheduleFind.month,
 			   			    		  '_id' : result._id,
 			   			    	 'doctorId' : result.doctor,			   						   
 			   			     'scheduleTime' : freeHours});
