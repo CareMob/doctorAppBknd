@@ -9,3 +9,6 @@ app/config.js
 bakas/exemple#2.js
 bakas/doctorapp.json
 app/setup/queryExemples.js
+app/models/appointment.js
+app/models/schedule.js
+funcao
