@@ -141,13 +141,17 @@ apiRoutes.use(function(req, res, next) {
 
 // Rotas autenticadas...... 
 
-
 apiRoutes.get('/conn', function(req, res, next){
 	res.json({ success: true,
 			   connected: connStatus });
 });
 
 
+/**
+* ===================================================================================================
+* =================================== SETUP ROUTES ==================================================
+* ===================================================================================================
+*/
 apiRoutes.get('/setup', function(req, res, next){
 	var newSpec = {},
 	    contadorSpec = 0,
@@ -198,7 +202,7 @@ apiRoutes.get('/setup', function(req, res, next){
 apiRoutes.get('/setupSchedule', function(req, res, next){
 
    var year       = 2015,
-       month      = 10, 
+       month      = 8, 
        inicialDay = 1,
        finalDay   = 31,
        appointmenDuration = 15,
@@ -208,7 +212,7 @@ apiRoutes.get('/setupSchedule', function(req, res, next){
        endAfteernoonTime = 18
        newSchedule = new Schedule();
 	   newSchedule.doctor = '55c3eeb240c3f93c13faa201', //mongoose.Schema.Types.ObjectId('55c3eeb240c3f93c13faa201'); // Pompeu Schema.Types.ObjectId,
-       newSchedule.month  = month;
+       newSchedule.month  = month + 1;
        newSchedule.year   = year
        hoursPerDay  = [],
        time    = startMorningTime,
@@ -217,8 +221,7 @@ apiRoutes.get('/setupSchedule', function(req, res, next){
        hours = [],
        appointmentDate = Date(); 
 
-	while (fullTime <= endAfteernoonTime) {
-          
+	while (fullTime <= endAfteernoonTime) {          
 		if ((time + (minutes / 100) + (appointmenDuration / 100)) < (time + 0.6) ){
             minutes += appointmenDuration;
 
@@ -239,67 +242,73 @@ apiRoutes.get('/setupSchedule', function(req, res, next){
           hours = new Object();
           hours.hour = time + ":" + minutes;
           hoursPerDay.push(hours);
-       }
-	
-    } 
-
+       }	
+    } //While 
     
-    for (currenteDay = 1; currenteDay < 30; currenteDay++){
-
+    for (currenteDay = 1; currenteDay <= 31; currenteDay++){
         appointmentDate = new Date(year,month,currenteDay);
        //somente dias de semana
         if (appointmentDate.getDay () > 0 && appointmentDate.getDay () < 6){
-
             newSchedule.scheduleDate.push({day : currenteDay,
             							   scheduleTime: hoursPerDay});
-
 	    }
-	}
-    
-
+	}   
 	newSchedule.save(function(err){
 		res.json(newSchedule);
-	});
-	
+	});	
 });
 
 
-// Pega todos os horarios no DB
-apiRoutes.post('/schedule', function(req, res, next) {
+/**
+* ===================================================================================================
+* ================================ APPOINTMENTS ROUTES ==============================================
+* ===================================================================================================
+*/
 
-	/**teste **/
-	var schdlGetFree = req.body,
-		parShearch = {'dayIni' : 01,
-					'dayEnd'   : 31,
-					'monthIni' : schdlGetFree.monthIni,
-					'monthEnd' : schdlGetFree.monthEnd,
-					'yearIni'  : 2015,
-					'yearEnd'  : 2015,
-					'doctor'   : schdlGetFree.doctorId}
-	/* ------------------------------------------- '55c3eeb240c3f93c13faa201' */
-	/*Schedule
-		scheduleDate
-			scheduleTime
-		*/
-	
-	var freeHours = [],
+// Pega todos os horarios no DB
+apiRoutes.get('/schedule', function(req, res, next) {
+
+	//var teste = JSON.parse(req.query.param);
+	//console.log(teste.doctorName);
+
+	if(!req.query.param)
+		res.json({success: false});
+
+	var schdlGetFree = JSON.parse(req.query.param), //req.body,	
+		iniPer       = new Date(schdlGetFree.perIni),
+		endPer       = new Date(schdlGetFree.perEnd),
+		parShearch = {'dayIni' : iniPer.getDate(),
+				    'dayEnd'   : endPer.getDate(),
+					'monthIni' : iniPer.getMonth() + 1,
+					'monthEnd' : endPer.getMonth() + 1,
+					'yearIni'  : iniPer.getFullYear(),
+					'yearEnd'  : endPer.getFullYear(),
+					'doctor'   : schdlGetFree.doctorId}	
+	    freeHours = [],
 	    schFree   = [],
 		testeReg = 0,
 		lgPaciente = 0,
 		freeTime = new Schedule();
-	// console.log("busca horarios");
-	
 
+	//console.log(schdlGetFree);
+	//console.log(parShearch);
+
+	//Filtra horarios disponiveis by DoctorId
 	Schedule.find({'month'  : {$gte: parShearch.monthIni, $lte: parShearch.monthEnd},
 				   'year'   : parShearch.yearIni,
 				   'doctor' : parShearch.doctor}, function(err, scheduleFind){		   	
 
+
 			// Varre a agenda do medico para verificar disponibilidade de horario
 			scheduleFind.forEach(function(scheduleFind){			   	
+				//console.log("Mes: " +  scheduleFind.month);
 			   	scheduleFind.scheduleDate.forEach(function(result){
-			   		//console.log('Dia: ' + result.day);
-
-			   		//Verifica intervalo de dias selecionado.
+			   		//Verifica intervalo de dias selecionado.			   		
+			   		//console.log("dia: " +  result.day);
+			   		//console.log("Ini: " + parShearch.dayIni);
+			   		//console.log("Fim: " + parShearch.dayEnd);
+			   		//console.log(" -------------------------- ");
+			   		
 			   		if(result.day >= parShearch.dayIni 
 			   				&& result.day <= parShearch.dayEnd){		   		 
 			   		 	// Limpa lista de horarios do dia anterior....
@@ -317,55 +326,62 @@ apiRoutes.post('/schedule', function(req, res, next) {
 			   			    	 'doctorId' : result.doctor,			   						   
 			   			     'scheduleTime' : freeHours});
 			   		} // Teste intervalo de dicas			   		
-
-		   		}); //Foreach do dia				   	
-
-
-			}); // Foreach do Finf
-
-			//result.scheduleTime
+		   		}); //Foreach do dia
+			}); // Foreach do Finf			
 			//Retorna horaris disponivel para seleção de consulta
 			res.json(schFree);
+	}); // Find	
 
-			//Return FreeTime Array.
-			//res.json({'DiasLivres' : freeHours});
+}); //GET Schedule
 
-	}); // Find
+apiRoutes.post('/schedule', function(req, res, next) {
 
-	/*Schedule.find({'month' : 9,
-				   'year'  : 2015,
-				   'doctor' : "55c3eeb240c3f93c13faa201",
-				   'scheduleDate.day' 
-				   'scheduleDate.scheduleTime.patient' : {'$exists': false}}, function(err, freeTime){
-		res.json(freeTime);
-	});*/
-});
-
-
-
-
-// Add novos medicos no DB
-apiRoutes.post('/doctors', function(req, res, next) {
-
-	var doctor = new Person(req.body);
-	doctor.save(function(err) {
-		if (err){
-			//throw err;			
-			res.json(err);
-		} 		
-		console.log(doctor);	
-		res.json(doctor);
+	//console.log(req.body);
+	var params = req.body;
+ 	///_hourId: '55dbbfaba6f1da981dd0a799'
+	//Schedule.find({'scheduleDate.scheduleTime._id': mongoose.Types.ObjectId('55dbbfaba6f1da981dd0a799') }, function(err, result){
+	Schedule.find({'scheduleDate.scheduleTime._id': params._hourId }, function(err, result){		
+		//params.userId
+		console.log(result);
+		res.json(result);
 	});
 
-});
+});//Post Schedule
 
+/**
+* ===================================================================================================
+* ================================ DORCTORS ROUTES ==================================================
+* ===================================================================================================
+*/
 
 // Pega todos os medicos no DB
 apiRoutes.get('/doctors', function(req, res, next) {
-	Person.find({'doctor' : {'$exists': true} }, function(err, doctors) {
-		res.json(doctors); 
+	var param = [];
+
+	//console.log(req.query);
+	if(!req.query.specialityId)
+		 param.push({'doctor' :{'$exists': true}});
+	else param.push({'doctor' :{'$exists': true},
+		  			'doctor.speciality._id' : req.query.speciality});	
+
+	Person.find(param[0], function(err, doctors) {
+			res.json(doctors); 
+	});
+
+});
+
+// Add novos medicos no DB
+apiRoutes.post('/doctors', function(req, res, next) {
+	var doctor = new Person(req.body);
+	doctor.save(function(err) {
+		if (err){			
+			res.json(err);
+		} 		
+		//console.log(doctor);	
+		res.json(doctor);
 	});
 });
+
 /*
 // Add novos medicos no DB
 apiRoutes.post('/doctors', function(req, res, next) {
@@ -380,107 +396,16 @@ apiRoutes.post('/doctors', function(req, res, next) {
 	});
 });*/
 
-
+/**
+* ===================================================================================================
+* ================================ SPECIALITIES ROUTES ==============================================
+* ===================================================================================================
+*/
 // Pega todos as especialidades no DB
 apiRoutes.get('/specialities', function(req, res) {
 	Speciality.find({}, function(err, specs) {
 		res.json(specs);
 	});
-});
-
-// Cria nova consulta
-apiRoutes.post('/appointment', function(req, res){
-	//var _personD = new Person({});
-	//var user = Person.find({  , 'doctor': {'$exists': false} });
-	var _user = {};
-	Person.findOne({'userId': 5499544269 }, function(err, user){
-		if(err) _user = {success: false};
-
-		Person.findOne({'doctor': {'$exists': true }}, function(err, doctor){
-			//res.json([user, doctor]);
-				
-			//res.json({nome: doctor.doctor.speciality._id});
-
-					
-			var newDoc  = new Appointment({    	
-			   doctorID: doctor._id,	
-			   //$push : {doctorID: doctor},
-			appointments: {dateTo: Date('2015-25-08'),
-			 			 isEnable: true,
-						   hoursTo: { hours: 0830,	
-						   	         person: user._id,
-					                   name: user.name,
-					             //speciality: specID,
-					               realized: false,
-					                 raking: 0,
-					           isHealthCare: false}
-		                }
-		            });
-
-			//newDoc.doctorID.$push(doctor);
-		    //newDoc.appointment.person.push(user);		    
-
-		    res.json(newDoc);
-		    /*newDoc.save(function(err) {
-				if (err) res.json(err) ;
-				res.json(newDoc);
-			});*/
-		}); //Doctor		
-	}); 
-
-});
-
-apiRoutes.get('/consultas', function(req, res){
-
-	/*var _data = new Date(),
-		_mes  = _data.getMonth(),
-		_dia  = _data.getDay();
-
-	res.json({data: _data,
-		      mes: _mes,
-		      dia: _dia,
-		      teste: now.getTime() });*/
-
-
-
-
-var _user = {};
-	Person.findOne({'userId': 5499544269 }, function(err, user){
-		if(err) _user = {success: false};
-
-		Person.findOne({'doctor': {'$exists': true }}, function(err, doctor){
-			//res.json([user, doctor]);
-				
-			//res.json({nome: doctor.doctor.speciality._id});
-
-					
-			var newDoc  = new Appointment({    	
-			   doctorID: doctor._id,	
-			   //$push : {doctorID: doctor},
-			appointments: {dateTo: Date('2015-25-08'),
-			 			 isEnable: true,
-						   hoursTo: { hours: 0830,	
-						   	         person: user._id,
-					                   name: user.name,
-					             //speciality: specID,
-					               realized: false,
-					                 raking: 0,
-					           isHealthCare: false}
-		                }
-		            });
-
-			//newDoc.doctorID.$push(doctor);
-		    //newDoc.appointment.person.push(user);		    
-
-		    res.json(newDoc);
-		    /*newDoc.save(function(err) {
-				if (err) res.json(err) ;
-				res.json(newDoc);
-			});*/
-		}); //Doctor		
-	});
-
-
 });
 
 
