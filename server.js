@@ -6,6 +6,8 @@ var app         = express();
 var bodyParser  = require('body-parser');
 var morgan      = require('morgan');
 var mongoose    = require('mongoose');
+var Schema      = mongoose.Schema;
+var objectId    = require('mongoose').Types.ObjectId;
 //var cors 		= require('cors');
 
 var jwt    = require('jsonwebtoken');  // used to create, sign, and verify tokens
@@ -202,7 +204,7 @@ apiRoutes.get('/setup', function(req, res, next){
 apiRoutes.get('/setupSchedule', function(req, res, next){
 
    var year       = 2015,
-       month      = 8, 
+       month      = 9, 
        inicialDay = 1,
        finalDay   = 31,
        appointmenDuration = 15,
@@ -212,14 +214,23 @@ apiRoutes.get('/setupSchedule', function(req, res, next){
        endAfteernoonTime = 18
        newSchedule = new Schedule();
 	   newSchedule.doctor = '55c3eeb240c3f93c13faa201', //mongoose.Schema.Types.ObjectId('55c3eeb240c3f93c13faa201'); // Pompeu Schema.Types.ObjectId,
-       newSchedule.month  = month + 1;
+       newSchedule.month  = month;
        newSchedule.year   = year
        hoursPerDay  = [],
        time    = startMorningTime,
        minutes = 0,
        fullTime = time,
        hours = [],
-       appointmentDate = Date(); 
+       appointmentDate = Date(),
+       specialityAux = []; 
+
+       var query = Speciality.find().where({'description' : 'ANGIOLOGIA'});
+     query.exec(function(err, result){
+        	//specialityAux = result; 
+        	newSchedule.speciality = result;
+        
+
+        //res.json(specialityAux);
 
 	while (fullTime <= endAfteernoonTime) {          
 		if ((time + (minutes / 100) + (appointmenDuration / 100)) < (time + 0.6) ){
@@ -241,14 +252,17 @@ apiRoutes.get('/setupSchedule', function(req, res, next){
 		if (fullTime < endAfteernoonTime){
           hours = new Object();
           hours.hour = time + ":" + minutes;
+          //Atribui horas.
           hoursPerDay.push(hours);
        }	
     } //While 
     
     for (currenteDay = 1; currenteDay <= 31; currenteDay++){
-        appointmentDate = new Date(year,month,currenteDay);
+        appointmentDate = new Date(year,month-1,currenteDay);
        //somente dias de semana
         if (appointmentDate.getDay () > 0 && appointmentDate.getDay () < 6){
+
+        	//Atribui dias.
             newSchedule.scheduleDate.push({day : currenteDay,
             							   scheduleTime: hoursPerDay});
 	    }
@@ -256,18 +270,99 @@ apiRoutes.get('/setupSchedule', function(req, res, next){
 	newSchedule.save(function(err){
 		res.json(newSchedule);
 	});	
+
+	}); // especialidade
 });
 
+/* teste
+apiRoutes.get('/setupSchedule', function(req, res, next){
+
+   var year       = 2015,
+       month      = 8, 
+       inicialDay = 1,
+       finalDay   = 31,
+       appointmenDuration = 15,
+       startMorningTime = 8,
+       endMorningTime = 12,
+       startAfteernoonTime = 14,
+       endAfteernoonTime = 18
+       newSchedule = new Schedule();
+	   newSchedule.doctor = '55c017e3a8e8f2041872cfc1', //mongoose.Schema.Types.ObjectId('55c3eeb240c3f93c13faa201'); // Pompeu Schema.Types.ObjectId,
+       newSchedule.month  = month;
+       newSchedule.year   = year
+       hoursPerDay  = [],
+       time    = startMorningTime,
+       minutes = 0,
+       fullTime = time,
+       hours = [],
+       scheduleDateAux = [],
+       appointmentDate = Date(); 
+
+
+    hoursPerDay = new Schema({hour : String,
+                    	     pacient: Schema.Types.ObjectId,
+                              status: Number,
+                             ranking: Number
+        					 });
+
+	while (fullTime <= endAfteernoonTime) {          
+		if ((time + (minutes / 100) + (appointmenDuration / 100)) < (time + 0.6) ){
+            minutes += appointmenDuration;
+
+	 	} else {
+	 		minutes += appointmenDuration - 60;
+    		time++;
+	 	}
+
+	 	fullTime = time + (minutes / 100);
+
+	 	if (fullTime >= endMorningTime && fullTime < startAfteernoonTime) {
+	 		time = startAfteernoonTime;
+	 		minutes = 0;
+	 		fullTime = time;
+	 	}
+
+		if (fullTime < endAfteernoonTime){
+          //hours = new Object();
+          //hours.hour = time + ":" + minutes;
+         / hours = new Schema({hour : time + ":" + minutes,
+                    	     pacient: Schema.Types.ObjectId,
+                              status: 0,
+                             ranking: 0
+        					 });/
+          //Atribui horas.
+          //hoursPerDay.push({hour : time + ":" + minutes});
+       }	
+    } //While 
+    
+    for (currenteDay = 1; currenteDay <= 31; currenteDay++){
+        appointmentDate = new Date(year,month-1,currenteDay);
+        console.log("Data registro: " + appointmentDate)
+       //somente dias de semana
+        if (appointmentDate.getDay () > 0 && appointmentDate.getDay () < 6){
+        	console.log(currenteDay);
+        	/scheduleDateAux = new Schema({day : currenteDay,
+ 						 	    scheduleTime  : [hoursPerDay]
+ 						 		});/
+        	//Atribui dias.
+            newSchedule.scheduleDate.push({day : currenteDay,
+ 						 	   	 scheduleTime  : [hoursPerDay]
+ 						 			});
+	    }
+	}   
+	newSchedule.save(function(err){
+		res.json(newSchedule);
+	});	
+});
+*/
 
 /**
 * ===================================================================================================
 * ================================ APPOINTMENTS ROUTES ==============================================
 * ===================================================================================================
 */
-
 // Pega todos os horarios no DB
 apiRoutes.get('/schedule', function(req, res, next) {
-
 	//var teste = JSON.parse(req.query.param);
 	//console.log(teste.doctorName);
 
@@ -291,13 +386,12 @@ apiRoutes.get('/schedule', function(req, res, next) {
 		freeTime = new Schedule();
 
 	//console.log(schdlGetFree);
-	//console.log(parShearch);
+	//console.log(parShearch);	
 
 	//Filtra horarios disponiveis by DoctorId
 	Schedule.find({'month'  : {$gte: parShearch.monthIni, $lte: parShearch.monthEnd},
 				   'year'   : parShearch.yearIni,
-				   'doctor' : parShearch.doctor}, function(err, scheduleFind){		   	
-
+				   'doctor' : parShearch.doctor}, function(err, scheduleFind){				   	
 
 			// Varre a agenda do medico para verificar disponibilidade de horario
 			scheduleFind.forEach(function(scheduleFind){			   	
@@ -337,16 +431,144 @@ apiRoutes.get('/schedule', function(req, res, next) {
 apiRoutes.post('/schedule', function(req, res, next) {
 
 	//console.log(req.body);
-	var params = req.body;
- 	///_hourId: '55dbbfaba6f1da981dd0a799'
-	//Schedule.find({'scheduleDate.scheduleTime._id': mongoose.Types.ObjectId('55dbbfaba6f1da981dd0a799') }, function(err, result){
-	Schedule.find({'scheduleDate.scheduleTime._id': params._hourId }, function(err, result){		
-		//params.userId
-		console.log(result);
-		res.json(result);
+	var param  =  req.body,
+		result = {},
+		update = {
+  				"hour": '08:16'
+		};	
+
+		//{_id: objectId('55dfb017e1b6cb7c11d1c29f')}
+		/*Schedule.update({'scheduleDate.scheduleTime._id': objectId("55dfb017e1b6cb7c11d1c3a7")},
+                		{"scheduleDate.scheduleTime.$"  : true }, update , function(err, isUpdated){
+				console.log(isUpdated);
+				res.send(isUpdated);
+		});*/
+
+
+	//objectId('55dfb017e1b6cb7c11d1c2c0')
+	//ObjectId("55dfb017e1b6cb7c11d1c3a7")
+	//var schdlAll = 
+	Schedule.find({'scheduleDate.scheduleTime._id': objectId("55dfb017e1b6cb7c11d1c3a7")}, //param._hourId }, 
+                  {"scheduleDate.scheduleTime.$"  : true }, function(err, schedule){	  
+	   if(!err){
+	   	   schedule.forEach(function(schdlDate){
+	   	   		schdlDate.scheduleDate.forEach(function(schdlTime){
+	   	   			schdlTime.scheduleTime.forEach(function(freeHours){
+	   	   				/*freeHours.update({_id: '55dfb017e1b6cb7c11d1c3a7'},{hour: '08:16'}, function(err, isUpdated){
+	   	   					console.log(isUpdated);	
+	   	   				} );
+	   	   				console.log(freeHours._id);*/
+	   	   				if(freeHours._id == '55dfb017e1b6cb7c11d1c3a7'){ //param._hourId){		   	   				   					
+	   	   					freeHours.pacient = "55c7f83a3edd7aa419da4fc9"; //param._userId; //objectId("55c7f83a3edd7aa419da4fc9");
+	                        freeHours.status  = 0;
+	                       	freeHours.ranking = 0;
+
+	                       	//res.json({id: schdlDate._id});
+
+	                       	//schdlDate.scheduleDate	                       	
+	                       	//Person.update({'userId': 5499652358},{'doctor.speciality' : specs.speciality}
+	                       		//{_id : objectId('55dfb017e1b6cb7c11d1c387') }
+	                       	/*Schedule.update({'_id': schdlDate._id, 
+	                       					'scheduleDate.$._id': { $elemMatch: {day: 10}} 
+	                       					}, {'scheduleDate.scheduleTime' : schdlTime.scheduleTime }, function(err, isUpdated){
+								console.log(isUpdated);
+								res.send(isUpdated);
+							});*/
+
+							Schedule.find({'_id': schdlDate._id,										
+	                       					'scheduleDate': { $elemMatch: {day: 10}}
+	                       					}, function(err, isUpdated){
+								console.log(isUpdated);
+								res.send(isUpdated)
+							});
+
+	                       	/*freeHours.save(function(err){
+	                       		if(err)	result = {success: false,
+	                       			    	     	error: handleError(err)};
+	                       				        	// '1501 - Não foi possível registrar consulta' 	                       		
+	                       		//console.log('entra no save');
+	                       		//console.log(freeHours);
+
+	                       		result = {success: true};
+	                       		//res.json(result);
+	                       	});*/
+	   	   				}	  				
+	   	   			});	   			
+	   	   		});
+	   	   		//console.log(schdlTime);
+	   	   });	
+		}else{
+			result = {success: false,
+	                    error: handleError(err)};
+		} // else !err
+		//schedule.save(function(err){});
+	   //res.json(schedule);
 	});
+	//Schedule.save();
+	//res.json({ok:'ok'})
+	/*Schedule.distinct( "doctor", 
+                     {'year' : 2015, 
+                     'month' : 9, 
+           'scheduleDate.day': {$gt:21} , 
+                'speciality': { $elemMatch: {_id : objectId('55a84c02eee7dd1819305471') } }
+                 //'speciality': { $elemMatch: {"description" : "ANGIOLOGIA"}}
+                    }, function(err, result){
+         res.json(result);
+    });*/
 
 });//Post Schedule
+
+/**
+* ===================================================================================================
+* ================================ APPOINTMENTS ROUTES ==============================================
+* ===================================================================================================
+*/
+apiRoutes.get('/appointment', function(req, res, next) {
+
+	//if(!req.query.param)
+	//	res.json({success: false});
+
+	var //param = req.query.param,
+		dateTime     = new Date,
+		month        = dateTime.getMonth() + 1,
+		appointments = []
+		appmtHours   = [];
+
+	//res.json({'success': dateTime});
+	
+	//Filtra horarios disponiveis by userId
+	Schedule.find({'month'  : {$gte: month},
+				   'year'   : {$gte: dateTime.getFullYear()} }, function(err, scheduleFind){				   				
+			scheduleFind.forEach(function(scheduleFind){			   				
+			   	scheduleFind.scheduleDate.forEach(function(result){		
+			   		
+			   		if(result.day >= dateTime.getDate()){		   		 
+			   		 	// Limpa lista de horarios do dia anterior....
+			   		 	appmtHours = [];
+			   		 	// Varre as os horarios disponivels para retorno
+			   			result.scheduleTime.forEach(function(hours){	
+			   				console.log(hours.pacient)		   				
+			   				if(hours.pacient 
+			   					&& hours.pacient == objectId("55c7f83a3edd7aa419da4fc9")){			   					
+			   					appmtHours.push(hours);
+			   				} 						   				
+			   			});
+			   			if(appmtHours.length > 0){
+			   				appointments.push({'day' : result.day,
+			   								 'month' : scheduleFind.month,
+			   					    		   '_id' : result._id,
+			   					    	  'doctorId' : result.doctor,			   						   
+			   					      'scheduleTime' : appmtHours});
+			   			}
+			   		} // Teste intervalo de dicas			   		
+		   		}); //Foreach do dia
+			}); // Foreach do Finf			
+			//Retorna horaris disponivel para seleção de consulta
+			res.json(appointments);
+	}); // Find	
+
+
+});
 
 /**
 * ===================================================================================================
@@ -354,20 +576,58 @@ apiRoutes.post('/schedule', function(req, res, next) {
 * ===================================================================================================
 */
 
+apiRoutes.get('/mene', function(req, res, next) {
+
+	//var specUpd = [] ;
+
+	Person.distinct( "doctor", 
+                    {'userId': 5499652358 }, function(err, result){
+
+            result.forEach(function(specs){
+            	specs.speciality.forEach(function(specialityAux){            		
+
+            		specialityAux.description = 'Psiquiatria'; //Teste
+
+            		//Atualiza By Id
+            		Person.update({'userId': 5499652358},{'doctor.speciality' : specs.speciality}, function(err, isUpdated){
+						console.log(isUpdated);
+						res.send(isUpdated);
+					});
+
+            		//specialityAux.save();
+            		//res.json(specialityAux);
+            	});
+           		//res.json(result); 	
+            });
+        /**/
+         
+    });
+
+	//res.json(specUpd);
+
+	/*Person.update({'scheduleDate.scheduleTime._id': objectId("55dfb017e1b6cb7c11d1c3a7")},
+                		{"scheduleDate.scheduleTime.$"  : true }, update , function(err, isUpdated){
+				console.log(isUpdated);
+				res.send(isUpdated);
+		});*/
+
+});
+
 // Pega todos os medicos no DB
 apiRoutes.get('/doctors', function(req, res, next) {
-	var param = [];
-
-	//console.log(req.query);
+	var param = []; 
+	
+	console.log(req.query);
 	if(!req.query.specialityId)
 		 param.push({'doctor' :{'$exists': true}});
 	else param.push({'doctor' :{'$exists': true},
-		  			'doctor.speciality._id' : req.query.speciality});	
+		  			'doctor.speciality._id' : req.query.specialityId});
+
+	console.log(param);
 
 	Person.find(param[0], function(err, doctors) {
-			res.json(doctors); 
+		res.json(doctors); 
 	});
-
 });
 
 // Add novos medicos no DB
