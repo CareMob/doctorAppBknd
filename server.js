@@ -391,8 +391,8 @@ apiRoutes.get('/schedule', function(req, res, next) {
 	//Filtra horarios disponiveis by DoctorId
 	Schedule.find({'month'  : {$gte: parShearch.monthIni, $lte: parShearch.monthEnd},
 				   'year'   : parShearch.yearIni,
-				   'doctor' : parShearch.doctor}, function(err, scheduleFind){				   	
-
+				   'doctor' : parShearch.doctor}, function(err, scheduleFind){
+				   	//console.log(scheduleFind);
 			// Varre a agenda do medico para verificar disponibilidade de horario
 			scheduleFind.forEach(function(scheduleFind){			   	
 				//console.log("Mes: " +  scheduleFind.month);
@@ -401,8 +401,7 @@ apiRoutes.get('/schedule', function(req, res, next) {
 			   		//console.log("dia: " +  result.day);
 			   		//console.log("Ini: " + parShearch.dayIni);
 			   		//console.log("Fim: " + parShearch.dayEnd);
-			   		//console.log(" -------------------------- ");
-			   		
+			   		//console.log(" -------------------------- ");			   		
 			   		if(result.day >= parShearch.dayIni 
 			   				&& result.day <= parShearch.dayEnd){		   		 
 			   		 	// Limpa lista de horarios do dia anterior....
@@ -410,7 +409,7 @@ apiRoutes.get('/schedule', function(req, res, next) {
 			   		 	// Varre as os horarios disponivels para retorno
 			   			result.scheduleTime.forEach(function(hours){			   				
 			   				if(!hours.pacient){
-			   					//console.log("@PASSO 1: " + teste123.pacient + " Hora: " + teste123.hour);
+			   					console.log("@PASSO 1:  Hora: " + hours.hour);
 			   					freeHours.push(hours);
 			   				} 						   				
 			   			});
@@ -421,136 +420,81 @@ apiRoutes.get('/schedule', function(req, res, next) {
 			   			     'scheduleTime' : freeHours});
 			   		} // Teste intervalo de dicas			   		
 		   		}); //Foreach do dia
-			}); // Foreach do Finf			
-			//Retorna horaris disponivel para seleção de consulta
-			res.json(schFree);
+			}); // Foreach do Finf						
+			//console.log(schFree);
+			res.json(schFree); //Retorna horaris disponivel para seleção de consulta
 	}); // Find	
 
 }); //GET Schedule
 
 apiRoutes.post('/schedule', function(req, res, next) {
-
-	//console.log(req.body);
-	var param  =  req.body,
-		result = {},
-		update = {
-  				"hour": '08:16'
-		};	
-
-		//{_id: objectId('55dfb017e1b6cb7c11d1c29f')}
-		/*Schedule.update({'scheduleDate.scheduleTime._id': objectId("55dfb017e1b6cb7c11d1c3a7")},
-                		{"scheduleDate.scheduleTime.$"  : true }, update , function(err, isUpdated){
-				console.log(isUpdated);
-				res.send(isUpdated);
-		});*/
-
-
-	//objectId('55dfb017e1b6cb7c11d1c2c0')
-	//ObjectId("55dfb017e1b6cb7c11d1c3a7")
-	//var schdlAll = 
-	Schedule.find({'scheduleDate.scheduleTime._id': objectId("55dfb017e1b6cb7c11d1c3a7")}, //param._hourId }, 
-                  {"scheduleDate.scheduleTime.$"  : true }, function(err, schedule){	  
-	   if(!err){
-	   	   schedule.forEach(function(schdlDate){
-	   	   		schdlDate.scheduleDate.forEach(function(schdlTime){
-	   	   			schdlTime.scheduleTime.forEach(function(freeHours){
-	   	   				/*freeHours.update({_id: '55dfb017e1b6cb7c11d1c3a7'},{hour: '08:16'}, function(err, isUpdated){
-	   	   					console.log(isUpdated);	
-	   	   				} );
-	   	   				console.log(freeHours._id);*/
-	   	   				if(freeHours._id == '55dfb017e1b6cb7c11d1c3a7'){ //param._hourId){		   	   				   					
-	   	   					freeHours.pacient = "55c7f83a3edd7aa419da4fc9"; //param._userId; //objectId("55c7f83a3edd7aa419da4fc9");
-	                        freeHours.status  = 0;
-	                       	freeHours.ranking = 0;
-
-	                       	//res.json({id: schdlDate._id});
-
-	                       	//schdlDate.scheduleDate	                       	
-	                       	//Person.update({'userId': 5499652358},{'doctor.speciality' : specs.speciality}
-	                       		//{_id : objectId('55dfb017e1b6cb7c11d1c387') }
-	                       	/*Schedule.update({'_id': schdlDate._id, 
-	                       					'scheduleDate.$._id': { $elemMatch: {day: 10}} 
-	                       					}, {'scheduleDate.scheduleTime' : schdlTime.scheduleTime }, function(err, isUpdated){
-								console.log(isUpdated);
-								res.send(isUpdated);
-							});*/
-
-							Schedule.find({'_id': schdlDate._id,										
-	                       					'scheduleDate': { $elemMatch: {day: 10}}
-	                       					}, function(err, isUpdated){
-								console.log(isUpdated);
-								res.send(isUpdated)
-							});
-
-	                       	/*freeHours.save(function(err){
-	                       		if(err)	result = {success: false,
-	                       			    	     	error: handleError(err)};
-	                       				        	// '1501 - Não foi possível registrar consulta' 	                       		
-	                       		//console.log('entra no save');
-	                       		//console.log(freeHours);
-
-	                       		result = {success: true};
-	                       		//res.json(result);
-	                       	});*/
-	   	   				}	  				
-	   	   			});	   			
-	   	   		});
-	   	   		//console.log(schdlTime);
-	   	   });	
-		}else{
-			result = {success: false,
-	                    error: handleError(err)};
-		} // else !err
-		//schedule.save(function(err){});
-	   //res.json(schedule);
-	});
-	//Schedule.save();
-	//res.json({ok:'ok'})
-	/*Schedule.distinct( "doctor", 
-                     {'year' : 2015, 
-                     'month' : 9, 
-           'scheduleDate.day': {$gt:21} , 
-                'speciality': { $elemMatch: {_id : objectId('55a84c02eee7dd1819305471') } }
-                 //'speciality': { $elemMatch: {"description" : "ANGIOLOGIA"}}
-                    }, function(err, result){
-         res.json(result);
-    });*/
-
+    //console.log(req.body);
+    var param  =  req.body,
+        result = {};          
+    //Solução Cav, funciona....     ObjectId("55dfb017e1b6cb7c11d1c499") Dia 22 - 15:45
+    Schedule.find({'scheduleDate.scheduleTime._id': param._hourId}, //objectId("55dfb017e1b6cb7c11d1c499")}, //param._hourId }, 
+                  {"scheduleDate.scheduleTime.$"  : true }, function(err, schedule){      
+       if(!err){
+           schedule.forEach(function(schdlDate){
+                schdlDate.scheduleDate.forEach(function(schdlTime){
+                    schdlTime.scheduleTime.forEach(function(freeHours){                        
+                        if(freeHours._id == param._hourId){ //'55dfb017e1b6cb7c11d1c499'
+                            freeHours.pacient = param._userId; // Menegat 55e3720e46d781a2480f80e2 - Cav - objectId("55c7f83a3edd7aa419da4fc9");
+                            freeHours.status  = 0;
+                            freeHours.ranking = 0;
+                            //Gera update na base de dados...
+                            Schedule.update({ '_id' : schdlDate._id,
+                                    //'scheduleDate._id' : ObjectId("55dbbfaaa6f1da981dd0a527"),
+                                     'scheduleDate.scheduleTime._id' : param._hourId}, //objectId("55dfb017e1b6cb7c11d1c499")
+                                      {$set : {'scheduleDate.$.scheduleTime' : schdlTime.scheduleTime }}, function(err, isUpdated){
+                                      res.send(isUpdated)
+                                });
+                        }
+                    });
+                });
+           });
+        }else{
+            result = {success: false,
+                        error: handleError(err)};
+        } // else !err       
+    });
 });//Post Schedule
-
 /**
 * ===================================================================================================
 * ================================ APPOINTMENTS ROUTES ==============================================
 * ===================================================================================================
 */
-apiRoutes.get('/appointment', function(req, res, next) {
+// Get by Id Benef
+apiRoutes.get('/appointment/:id', function(req, res, next) {
 
 	//if(!req.query.param)
 	//	res.json({success: false});
+	console.log(req.query);
+	console.log(req.params);
+	//res.json({teste: });
 
 	var //param = req.query.param,
 		dateTime     = new Date,
 		month        = dateTime.getMonth() + 1,
 		appointments = []
 		appmtHours   = [];
-
-	//res.json({'success': dateTime});
 	
 	//Filtra horarios disponiveis by userId
 	Schedule.find({'month'  : {$gte: month},
 				   'year'   : {$gte: dateTime.getFullYear()} }, function(err, scheduleFind){				   				
 			scheduleFind.forEach(function(scheduleFind){			   				
-			   	scheduleFind.scheduleDate.forEach(function(result){		
-			   		
-			   		if(result.day >= dateTime.getDate()){		   		 
-			   		 	// Limpa lista de horarios do dia anterior....
-			   		 	appmtHours = [];
-			   		 	// Varre as os horarios disponivels para retorno
-			   			result.scheduleTime.forEach(function(hours){	
-			   				console.log(hours.pacient)		   				
-			   				if(hours.pacient 
-			   					&& hours.pacient == objectId("55c7f83a3edd7aa419da4fc9")){			   					
+			   	scheduleFind.scheduleDate.forEach(function(result){	
+			   		/*------------------------------------------------------------------*/
+			   		/*---------------- DEIXAR COMENTADO POR EM QUANTO ------------------*/	   		
+			   		/*------------------------------------------------------------------*/
+			   		//if(result.day >= dateTime.getDate()){
+			   		 	appmtHours = []; // Limpa lista de horarios do dia anterior....			   		 	
+			   			result.scheduleTime.forEach(function(hours){ // Varre as os horarios disponivels para retorno
+			   				if(hours.pacient
+			   					&& hours.pacient == req.params.id //"55c7f83a3edd7aa419da4fc9"
+			   					&& hours.status  != 2 ){
 			   					appmtHours.push(hours);
+			   					console.log(hours);
 			   				} 						   				
 			   			});
 			   			if(appmtHours.length > 0){
@@ -559,15 +503,15 @@ apiRoutes.get('/appointment', function(req, res, next) {
 			   					    		   '_id' : result._id,
 			   					    	  'doctorId' : result.doctor,			   						   
 			   					      'scheduleTime' : appmtHours});
+
+			   				console.log(appointments);
 			   			}
-			   		} // Teste intervalo de dicas			   		
+			   		//} // Teste intervalo de dias			   		
 		   		}); //Foreach do dia
 			}); // Foreach do Finf			
 			//Retorna horaris disponivel para seleção de consulta
 			res.json(appointments);
 	}); // Find	
-
-
 });
 
 /**
@@ -601,8 +545,7 @@ apiRoutes.get('/mene', function(req, res, next) {
             });
         /**/
          
-    });
-
+});
 	//res.json(specUpd);
 
 	/*Person.update({'scheduleDate.scheduleTime._id': objectId("55dfb017e1b6cb7c11d1c3a7")},
@@ -612,6 +555,7 @@ apiRoutes.get('/mene', function(req, res, next) {
 		});*/
 
 });
+
 
 // Pega todos os medicos no DB
 apiRoutes.get('/doctors', function(req, res, next) {
