@@ -361,16 +361,33 @@ apiRoutes.get('/setupSchedule', function(req, res, next){
 * ===================================================================================================
 */
 // Add novos Users no DB
-apiRoutes.post('/person', function(req, res, next) {
-	var person = new Person(req.body);
-	person.save(function(err) {
-		if (err){			
-			res.json(err);
-		} 		
-		//console.log(person);	
-		res.json(person);
-	});
-});
+apiRoutes.route('/person')
+	.post(function(req, res, next) {
+		var person = new Person(req.body);
+		person.save(function(err) {
+			if (err) res.json(err);
+			//console.log(person);	
+			res.send(person);
+		});
+	}); //Post person
+
+apiRoutes.route('/person/:id')
+	.put(function(req, res, next) {
+		Person.findById(req.params.id, function(err, person){
+			if(err)
+				res.send(err);
+			//Atualiza campos
+			person.name     = req.body.name;
+			person.lastname = req.body.lastname;
+
+			person.save(function(err){
+				if(err)
+					res.send(err);
+
+				res.json(person);
+			});
+		});		
+	}); //Post person
 
 /**
 * ===================================================================================================
@@ -394,7 +411,7 @@ apiRoutes.get('/schedule', function(req, res, next) {
 					'monthEnd' : endPer.getMonth() + 1,
 					'yearIni'  : iniPer.getFullYear(),
 					'yearEnd'  : endPer.getFullYear(),
-					'doctor'   : schdlGetFree.doctorId}	
+					'doctor'   : schdlGetFree.doctorId},			
 	    freeHours = [],
 	    schFree   = [],
 		testeReg = 0,
@@ -425,7 +442,7 @@ apiRoutes.get('/schedule', function(req, res, next) {
 			   		 	// Varre as os horarios disponivels para retorno
 			   			result.scheduleTime.forEach(function(hours){			   				
 			   				if(!hours.pacient){
-			   					console.log("@PASSO 1:  Hora: " + hours.hour);
+			   					//console.log("@PASSO 1:  Hora: " + hours.hour);
 			   					freeHours.push(hours);
 			   				} 						   				
 			   			});
@@ -476,11 +493,7 @@ apiRoutes.post('/schedule', function(req, res, next) {
         } // else !err       
     });
 });//Post Schedule
-/**
-* ===================================================================================================
-* ================================ APPOINTMENTS ROUTES ==============================================
-* ===================================================================================================
-*/
+
 // Get by Id Benef
 apiRoutes.get('/schedule/:id', function(req, res, next) {
 
@@ -497,11 +510,13 @@ apiRoutes.get('/schedule/:id', function(req, res, next) {
 		lastDoctor   = objectId(), 
 		query;
 
-	/*query
+	/*
+	query
 	query.exec(function (err, person) {
   			if (err) return handleError(err);
   			doctorName.push({dctrName : person.name + ' ' + person.lastname});
-	});;*/
+	});;
+	*/
 	
 	//Filtra horarios disponiveis by userId
 	Schedule.find({'month'  : {$gte: month},
@@ -561,9 +576,7 @@ apiRoutes.get('/schedule/:id', function(req, res, next) {
 * ================================ DORCTORS ROUTES ==================================================
 * ===================================================================================================
 */
-
 apiRoutes.get('/mene', function(req, res, next) {	
-
 	Person.distinct( "doctor", 
                     {'userId': 5499652358 }, function(err, result){
             result.forEach(function(specs){
@@ -597,9 +610,9 @@ apiRoutes.get('/doctors', function(req, res, next) {
 	
 	console.log(req.query);
 	if(!req.query.specialityId)
-		 param.push({'doctor' :{'$exists': true}});
-	else param.push({'doctor' :{'$exists': true},
-		  			'doctor.speciality._id' : req.query.specialityId});
+		 param.push({'doctor' : {'$exists': true}});
+	else param.push({'doctor' : {'$exists': true},
+		  			 'doctor.speciality._id' : req.query.specialityId});
 
 	console.log(param);
 

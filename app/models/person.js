@@ -9,6 +9,8 @@ module.exports = mongoose.model('Person', new Schema({
    cardId: Number, //CPF/CNPJ
    userId: Number, //Celular usuario/ID Medico  
 verfifyID: String, // Cod verificação do Numero de celular.  
+healthCareId: Number,
+birthday: Date,
    doctor: { crmId: String,
             ranking: Number,
             address: String,
