@@ -395,14 +395,14 @@ apiRoutes.route('/person/:id')
 * ===================================================================================================
 */
 // Pega todos os horarios no DB
-apiRoutes.get('/schedule', function(req, res, next) {
+apiRoutes.post('/schedule', function(req, res, next) {
 	//var teste = JSON.parse(req.query.param);
 	//console.log(teste.doctorName);
 
-	if(!req.query.param)
+	if(!req.body)
 		res.json({success: false});
 
-	var schdlGetFree = JSON.parse(req.query.param), //req.body,	
+	var schdlGetFree = req.body, //JSON.parse(req.query.param),	
 		iniPer       = new Date(schdlGetFree.perIni),
 		endPer       = new Date(schdlGetFree.perEnd),
 		parShearch = {'dayIni' : iniPer.getDate(),
@@ -461,7 +461,7 @@ apiRoutes.get('/schedule', function(req, res, next) {
 }); //GET Schedule
 
 //Salva Consulta
-apiRoutes.post('/schedule', function(req, res, next) {
+apiRoutes.post('/appointment', function(req, res, next) {
     //console.log(req.body);
     var param  =  req.body,
         result = {};          
@@ -495,9 +495,9 @@ apiRoutes.post('/schedule', function(req, res, next) {
 });//Post Schedule
 
 // Get by Id Benef
-apiRoutes.get('/schedule/:id', function(req, res, next) {
+apiRoutes.get('/schedule/:userId', function(req, res, next) {
 
-	if(!req.params.id)
+	if(!req.params.userId)
 		res.json({success: false});
 	//console.log(req.query);
 	//console.log(req.params);
@@ -538,7 +538,7 @@ apiRoutes.get('/schedule/:id', function(req, res, next) {
 			   		 	appmtHours = []; // Limpa lista de horarios do dia anterior....			   		 	
 			   			result.scheduleTime.forEach(function(hours){ // Varre as os horarios disponivels para retorno
 			   				if(hours.pacient
-			   					&& hours.pacient == req.params.id //"55c7f83a3edd7aa419da4fc9"
+			   					&& hours.pacient == req.params.userId //"55c7f83a3edd7aa419da4fc9"
 			   					&& hours.status  != 2 ){
 			   					appmtHours.push(hours);
 			   					//console.log(hours);
@@ -602,6 +602,14 @@ apiRoutes.get('/mene', function(req, res, next) {
 		});*/
 
 });
+
+/*apiRoutes.get('/mene/:perIni:perEnd:id', function(req, res, next) {	
+	console.log(req.params.id);
+	console.log(req.params.perIni);
+	console.log(req.params.perEnd);
+	
+	res.json({success: false});
+});*/
 
 
 // Pega todos os medicos no DB
