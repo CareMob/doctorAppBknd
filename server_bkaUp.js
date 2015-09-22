@@ -21,7 +21,6 @@ var Speciality  = require('./app/models/speciality');
 var Person      = require('./app/models/person');
 var Appointment = require('./app/models/appointment');
 var Schedule    = require('./app/models/schedule');
-var City		= require('./app/models/city');
 
 
 
@@ -34,6 +33,8 @@ String.prototype.toProperCase = function () {
     return this.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 };
 // =====================================================================================================================
+
+
 /*var uristring = process.env.MONGOLAB_URI || 
   				process.env.MONGOHQ_URL  || 
   				'mongodb://127.0.0.1/doctordblocal';
@@ -53,8 +54,8 @@ mongoose.connect(config.database, function (err, res) {
   }
 });
 
-app.use(express.static(__dirname + '/public'));  // set the static files location /public/img will be /img for users
-app.set('superSecret', config.secret);          // secret variable
+app.use(express.static(__dirname + '/public'));                 // set the static files location /public/img will be /img for users
+app.set('superSecret', config.secret); // secret variable
 
 // use body parser so we can get info from POST and/or URL parameters
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -69,15 +70,13 @@ app.use(morgan('dev'));
 
 // basic route (http://localhost:8080)
 app.get('/', function(req, res) {
-	res.send(' :) API Aplicativo doctorApp - rodando OK: Conexão: ' + connStatus);	
+	res.send(' :) API Aplicativo doctorApp - rodando OK: Conexão: ' + connStatus);
 });
 
 // basic route (http://localhost:8080)
 app.get('/dashboard', function(req, res) {
 	res.sendfile('./public/index.html');
 });
-
-
 
 // ---------------------------------------------------------
 // Instancia Router para utilizar nas rotas da api
@@ -111,7 +110,7 @@ apiRoutes.post('/auth', function(req, res) {
 // ---------------------------------------------------------
 // route middleware ==> Function para verificação de TOKEN de autenticação da API
 // ---------------------------------------------------------
-apiRoutes.use(function(req, res, next) {	
+apiRoutes.use(function(req, res, next) {
 
 	// Verifica no 'header' ou a 'url' ou metodo 'post' para verificar se foi informado o TOKEN
 	/*var token = req.body.token || req.param('token') || req.headers['x-access-token'];
@@ -149,6 +148,213 @@ apiRoutes.get('/conn', function(req, res, next){
 			   connected: connStatus });
 });
 
+
+/**
+* ===================================================================================================
+* =================================== SETUP ROUTES ==================================================
+* ===================================================================================================
+*/
+apiRoutes.get('/setup', function(req, res, next){
+	var newSpec = {},
+	    contadorSpec = 0,
+	    contMedico   = 0,
+	    specialities = require('./app/setup/speciality.json');
+
+	/*specialities.forEach(function(element, index, array){
+		//contadorSpec++;
+		newSpec = new Speciality({description: element.description.toProperCase()});
+	   	newSpec.save(function(err) {
+			if (err){
+				res.json(err)
+			};		
+			contadorSpec++;
+			//res.json({Especialides: contadorSpec})
+			//console.log('Salvao com sucesso.');
+		}); 
+	}); */
+
+	//Speciality.findOne({"description": "PSIQUIATRIA"}, function(err, specs) {
+		var Medico = new Person({"name": "Mauricio",
+			                 "lastname": "Teles Faoro",  
+			                   "cardId": 0, //CPF/CNPJ
+			                   "userId": 5491001493, //Celular usuario/ID Medico  
+			                "verfifyID": "6f60dfe56ee8437a8d16ed8" //,         // Cod verificação do Numero de celular.  
+			                   /*"doctor": { "crmId": "014605",
+			                             "ranking": 4,
+			                              "adress": "Rua Moreira César, 2400",  
+			                             "contact": 5432029000,
+			                          "speciality": [specs] // embedded document
+			                         //"healthCare": hCare // embedded document
+			         					}*/
+			     		});     
+
+		Medico.save(function(err) {
+			res.json(Medico);
+			//if (err) throw err;	
+			//contMedico++;
+		});
+
+	//});
+
+	/*res.json([{Especialides: contadorSpec},
+		     {Medicos: contMedico}]);*/
+
+});
+
+apiRoutes.get('/setupSchedule', function(req, res, next){
+
+   var year       = 2015,
+       month      = 9, 
+       inicialDay = 1,
+       finalDay   = 31,
+       appointmenDuration = 15,
+       startMorningTime = 8,
+       endMorningTime = 12,
+       startAfteernoonTime = 14,
+       endAfteernoonTime = 18
+       newSchedule = new Schedule();
+	   newSchedule.doctor = '55c017e3a8e8f2041872cfc1', //mongoose.Schema.Types.ObjectId('55c3eeb240c3f93c13faa201'); // Pompeu Schema.Types.ObjectId,
+       newSchedule.month  = month;
+       newSchedule.year   = year
+       hoursPerDay  = [],
+       time    = startMorningTime,
+       minutes = 0,
+       fullTime = time,
+       hours = [],
+       appointmentDate = Date(),
+       specialityAux = []; 
+
+       var query = Speciality.find().where({'description' : 'ANGIOLOGIA'});
+     query.exec(function(err, result){
+        	//specialityAux = result; 
+        	newSchedule.speciality = result;
+        
+
+        //res.json(specialityAux);
+
+	while (fullTime <= endAfteernoonTime) {          
+		if ((time + (minutes / 100) + (appointmenDuration / 100)) < (time + 0.6) ){
+            minutes += appointmenDuration;
+
+	 	} else {
+	 		minutes += appointmenDuration - 60;
+    		time++;
+	 	}
+
+	 	fullTime = time + (minutes / 100);
+
+	 	if (fullTime >= endMorningTime && fullTime < startAfteernoonTime) {
+	 		time = startAfteernoonTime;
+	 		minutes = 0;
+	 		fullTime = time;
+	 	}
+
+		if (fullTime < endAfteernoonTime){
+          hours = new Object();
+          hours.hour = time + ":" + minutes;
+          //Atribui horas.
+          hoursPerDay.push(hours);
+       }	
+    } //While 
+    
+    for (currenteDay = 1; currenteDay <= 31; currenteDay++){
+        appointmentDate = new Date(year,month-1,currenteDay);
+       //somente dias de semana
+        if (appointmentDate.getDay () > 0 && appointmentDate.getDay () < 6){
+
+        	//Atribui dias.
+            newSchedule.scheduleDate.push({day : currenteDay,
+            							   scheduleTime: hoursPerDay});
+	    }
+	}   
+	newSchedule.save(function(err){
+		res.json(newSchedule);
+	});	
+
+	}); // especialidade
+});
+
+/* teste
+apiRoutes.get('/setupSchedule', function(req, res, next){
+
+   var year       = 2015,
+       month      = 8, 
+       inicialDay = 1,
+       finalDay   = 31,
+       appointmenDuration = 15,
+       startMorningTime = 8,
+       endMorningTime = 12,
+       startAfteernoonTime = 14,
+       endAfteernoonTime = 18
+       newSchedule = new Schedule();
+	   newSchedule.doctor = '55c017e3a8e8f2041872cfc1', //mongoose.Schema.Types.ObjectId('55c3eeb240c3f93c13faa201'); // Pompeu Schema.Types.ObjectId,
+       newSchedule.month  = month;
+       newSchedule.year   = year
+       hoursPerDay  = [],
+       time    = startMorningTime,
+       minutes = 0,
+       fullTime = time,
+       hours = [],
+       scheduleDateAux = [],
+       appointmentDate = Date(); 
+
+
+    hoursPerDay = new Schema({hour : String,
+                    	     pacient: Schema.Types.ObjectId,
+                              status: Number,
+                             ranking: Number
+        					 });
+
+	while (fullTime <= endAfteernoonTime) {          
+		if ((time + (minutes / 100) + (appointmenDuration / 100)) < (time + 0.6) ){
+            minutes += appointmenDuration;
+
+	 	} else {
+	 		minutes += appointmenDuration - 60;
+    		time++;
+	 	}
+
+	 	fullTime = time + (minutes / 100);
+
+	 	if (fullTime >= endMorningTime && fullTime < startAfteernoonTime) {
+	 		time = startAfteernoonTime;
+	 		minutes = 0;
+	 		fullTime = time;
+	 	}
+
+		if (fullTime < endAfteernoonTime){
+          //hours = new Object();
+          //hours.hour = time + ":" + minutes;
+         / hours = new Schema({hour : time + ":" + minutes,
+                    	     pacient: Schema.Types.ObjectId,
+                              status: 0,
+                             ranking: 0
+        					 });/
+          //Atribui horas.
+          //hoursPerDay.push({hour : time + ":" + minutes});
+       }	
+    } //While 
+    
+    for (currenteDay = 1; currenteDay <= 31; currenteDay++){
+        appointmentDate = new Date(year,month-1,currenteDay);
+        console.log("Data registro: " + appointmentDate)
+       //somente dias de semana
+        if (appointmentDate.getDay () > 0 && appointmentDate.getDay () < 6){
+        	console.log(currenteDay);
+        	/scheduleDateAux = new Schema({day : currenteDay,
+ 						 	    scheduleTime  : [hoursPerDay]
+ 						 		});/
+        	//Atribui dias.
+            newSchedule.scheduleDate.push({day : currenteDay,
+ 						 	   	 scheduleTime  : [hoursPerDay]
+ 						 			});
+	    }
+	}   
+	newSchedule.save(function(err){
+		res.json(newSchedule);
+	});	
+});
+*/
 /**
 * ===================================================================================================
 * ======================================= USERS ROUTES ==============================================
@@ -190,6 +396,8 @@ apiRoutes.route('/person/:id')
 */
 // Pega todos os horarios no DB
 apiRoutes.post('/schedule', function(req, res, next) {
+	//var teste = JSON.parse(req.query.param);
+	//console.log(teste.doctorName);
 
 	if(!req.body)
 		res.json({success: false});
@@ -210,14 +418,23 @@ apiRoutes.post('/schedule', function(req, res, next) {
 		lgPaciente = 0,
 		freeTime = new Schedule();
 
+	//console.log(schdlGetFree);
+	//console.log(parShearch);	
+
 	//Filtra horarios disponiveis by DoctorId
 	Schedule.find({'month'  : {$gte: parShearch.monthIni, $lte: parShearch.monthEnd},
 				   'year'   : parShearch.yearIni,
-				   'doctor' : parShearch.doctor}, function(err, scheduleFind){	
+				   'doctor' : parShearch.doctor}, function(err, scheduleFind){
+				   	//console.log(scheduleFind);
 			// Varre a agenda do medico para verificar disponibilidade de horario
-			scheduleFind.forEach(function(scheduleFind){			   					
+			scheduleFind.forEach(function(scheduleFind){			   	
+				//console.log("Mes: " +  scheduleFind.month);
 			   	scheduleFind.scheduleDate.forEach(function(result){
-			   		//Verifica intervalo de dias selecionado.			   					   		
+			   		//Verifica intervalo de dias selecionado.			   		
+			   		//console.log("dia: " +  result.day);
+			   		//console.log("Ini: " + parShearch.dayIni);
+			   		//console.log("Fim: " + parShearch.dayEnd);
+			   		//console.log(" -------------------------- ");			   		
 			   		if(result.day >= parShearch.dayIni 
 			   				&& result.day <= parShearch.dayEnd){		   		 
 			   		 	// Limpa lista de horarios do dia anterior....
@@ -276,6 +493,7 @@ apiRoutes.post('/appointment', function(req, res, next) {
         } // else !err       
     });
 });//Post Schedule
+
 // Get by Id Benef
 apiRoutes.get('/schedule/:userId', function(req, res, next) {
 
@@ -302,45 +520,54 @@ apiRoutes.get('/schedule/:userId', function(req, res, next) {
 	
 	//Filtra horarios disponiveis by userId
 	Schedule.find({'month'  : {$gte: month},
-				   'year'   : {$gte: dateTime.getFullYear()} }, function(err, scheduleFind){	
-
-		Person.findOne({ _id: scheduleFind.doctor})
-						  .select('name lastname')
-						  .exec(function (err, doctor) {	
-
+				   'year'   : {$gte: dateTime.getFullYear()} }, function(err, scheduleFind){						   				
 			scheduleFind.forEach(function(scheduleFind){	
-				/*Person.findOne({ _id: scheduleFind.doctor})
+				Person.findOne({ _id: scheduleFind.doctor})
 					  .select('name lastname')
-					  .exec(function (err, doctor) {*/			
-				   	scheduleFind.scheduleDate.forEach(function(result){	
-				   	
-				   		 	appmtHours = []; // Limpa lista de horarios do dia anterior....			   		 	
-				   			result.scheduleTime.forEach(function(hours){ // Varre as os horarios disponivels para retorno
-				   				if(hours.pacient
-				   					&& hours.pacient == req.params.userId //"55c7f83a3edd7aa419da4fc9"
-				   					&& hours.status  != 2 ){
-				   					appmtHours.push(hours);			   					
-				   				} 						   				
-				   			});
-				   		
-				   			if(appmtHours.length > 0){			   	
-					   				appointments.push({'date' : result.day+'/'+scheduleFind.month+'/'+scheduleFind.year,
-					   							  'doctorId' : scheduleFind.doctor,
-					   							 'doctorName': doctor.name + ' ' + doctor.lastname,
-					   							       '_id' : result._id,				   						  
-					   					      'scheduleTime' : appmtHours});				   				
-				   			}
-			   		}); //Foreach do dia
+					  .exec(function (err, doctor) {
+				/*if (lastDoctor != scheduleFind.doctor){
+					console.log(scheduleFind.doctor + ' - ' + scheduleFind.doctor);
+					query = Person.findOne({ _id: objectId(scheduleFind.doctor) }).select('name lastname');
+					lastDoctor = scheduleFind.doctor;
+				}*/
+			   	scheduleFind.scheduleDate.forEach(function(result){	
+			   		/*------------------------------------------------------------------*/
+			   		/*---------------- DEIXAR COMENTADO POR EM QUANTO ------------------*/	   		
+			   		/*------------------------------------------------------------------*/
+			   		//if(result.day >= dateTime.getDate()){
+			   		 	appmtHours = []; // Limpa lista de horarios do dia anterior....			   		 	
+			   			result.scheduleTime.forEach(function(hours){ // Varre as os horarios disponivels para retorno
+			   				if(hours.pacient
+			   					&& hours.pacient == req.params.userId //"55c7f83a3edd7aa419da4fc9"
+			   					&& hours.status  != 2 ){
+			   					appmtHours.push(hours);
+			   					//console.log(hours);
+			   				} 						   				
+			   			});
+			   			//console.log(scheduleFind);
+			   			if(appmtHours.length > 0){
+			   				//query = Person.findOne({ _id: scheduleFind.doctor}).select('name lastname');
+			   				//query.exec(function (err, doctor) {
+			   					//console.log(doctor);
+  								//if (err) return handleError(err);
+				   				appointments.push({'date' : result.day+'/'+scheduleFind.month+'/'+scheduleFind.year,
+				   							  'doctorId' : scheduleFind.doctor,
+				   							 'doctorName': doctor.name + ' ' + doctor.lastname,
+				   							       '_id' : result._id,				   						  
+				   					      'scheduleTime' : appmtHours});
+				   				//console.log(appointments);
+			   				//}); //Query Doctor			   				
+			   			}
+			   		//} // Teste intervalo de dias			   		
+		   		}); //Foreach do dia
 
-					//Retorna horaris disponivel para seleção de consulta
-					//res.json(appointments); // teste MMenegat 
-				//}); //FindOne Doctor Teste MMenegat
+				//Retorna horaris disponivel para seleção de consulta
+				res.json(appointments); // teste MMenegat 
+				}); //FindOne Doctor Teste MMenegat
 
-			}); // Foreach do Find			
-
-			res.json(appointments); // teste MMenegat 
-		});
-			
+			}); // Foreach do Finf
+			//Retorna horaris disponivel para seleção de consulta
+			//res.json(appointments);		
 	}); // Find	
 });
 
@@ -349,100 +576,6 @@ apiRoutes.get('/schedule/:userId', function(req, res, next) {
 * ================================ DORCTORS ROUTES ==================================================
 * ===================================================================================================
 */
-
-apiRoutes.get('/sync', function(req, res){
-
-var getDoctorByID = function(idList) { // <-- no callback here 
-
-
-	/*
-.where({'name': "55bad6f4059e307c146de7fd"})
-		.where({'_id': "55f03979b5036ee01b8b5df1"}).exec(function(err, docResult){
-
-	*/
-
-	doctorsAvail = [];
-	var limit = idList.length - 1;
-	//for(var i = 0; i <= limit; i++){		
-		//Person.findOne({'_id' : idList[i]._idDoc},
-		Person.find({})
-		//.where({'name': "Carlos"})
-		.and({'name': "Leonardo", 'name': "Carlos"}).exec(function(err, docResult){
-	    	console.log('@PASSO 2');
-	    	res.send(docResult);
-	    	//return docResult;
-	    	doctorsAvail.push(docResult);
-	    });
-	//}
-
-	console.log('@PASSO 3');
-	console.log(doctorsAvail);
-    
-    //return a + b; // just return a value 
-    
-}
- 
- var medicos = [],
- 	 appmtHours = []
- 	 wait       = true;
-
-
-    Schedule.find({}, function(err, scheduleResult){
-
-    	//console.log('schedule 1');
-    	
-    	scheduleResult.forEach(function(scheduleResult){	
-
-    		//console.log('schedule 2');
-								
-			   	scheduleResult.scheduleDate.forEach(function(result){	
-
-			   		//console.log('schedule 3');
-			   		/*------------------------------------------------------------------*/
-			   		/*---------------- DEIXAR COMENTADO POR EM QUANTO ------------------*/	   		
-			   		/*------------------------------------------------------------------*/
-			   		//if(result.day >= dateTime.getDate()){
-			   		 	appmtHours = []; // Limpa lista de horarios do dia anterior....			   		 	
-			   			result.scheduleTime.forEach(function(hours){ // Varre as os horarios disponivels para retorno
-			   				if(hours.pacient
-			   					&& hours.pacient == "55c7f83a3edd7aa419da4fc9"
-			   					&& hours.status  != 2 ){
-			   					appmtHours.push(hours);			   					
-			   				} 						   				
-			   			});
-			   			//console.log(scheduleFind);
-			   			if(appmtHours.length > 0){
-
-			   				medicos.push({'_idDoc': scheduleResult.doctor});
-			   				console.log('@PASSO 1');
-			   				/*query = Person.findOne({ _id: scheduleFind.doctor}).select('name lastname');
-			   				query.exec(function (err, doctor) {*/
-			   					
-  								//if (err) return handleError(err);
-				   				/*appointments.push({'date' : result.day+'/'+scheduleFind.month+'/'+scheduleFind.year,
-				   							  'doctorId' : scheduleFind.doctor,
-				   							 'doctorName': doctor.name + ' ' + doctor.lastname,
-				   							       '_id' : result._id,				   						  
-				   					      'scheduleTime' : appmtHours});*/				   			
-			   				//}); //Query Doctor			   				
-			   			}
-			   		//} // Teste intervalo de dias			   		
-			   		//console.log('@WATI 3');
-		   		}); //Foreach do dia
-
-				//Retorna horaris disponivel para seleção de consulta			
-				//res.json(appointments); 
-				//console.log('@WATI 2');
-				
-		}); //foreach 1
-
-		//console.log(medicos);
-		//Busca medicos
-		getDoctorByID(medicos);
-	}); // Schedule
-
-})
-
 apiRoutes.get('/mene', function(req, res, next) {
 
 	var doctor = new Person();	
@@ -535,47 +668,7 @@ apiRoutes.get('/doctors', function(req, res, next) {
 	Person.find(param[0], function(err, doctors) {
 		res.json(doctors); 
 	});
-
 });
-
-apiRoutes.get('/doctorsByIds/:params', function(req, res, next) {
-	
-	if(req.params.params){
-
-		var param     = req.params.params.split(';'),
-			condition = []; 
-			//55a84c02eee7dd1819305471
-			//ObjectId("55a84c02eee7dd181930549d")		
-
-		if(param[0] != 0 && param[1] != 0){
-			condition.push({'doctor' : {'$exists': true},
-			 'doctor.address.cityId' : param[1],	
-			 'doctor.speciality._id' : objectId(param[0])});			
-		}else if(param[0] != 0){			
-			condition.push({'doctor' : {'$exists': true},			 
-			 'doctor.speciality._id' : objectId(param[0])});
-		}else {
-			condition.push({'doctor' : {'$exists': true},
-			 'doctor.address.cityId' : param[1]});			
-		}
-
-		//res.send(condition);
-
-
-		Person.find(condition[0], function(err, doctors) {
-			res.json(doctors); 
-		});
-
-	}else{
-		res.json({success: false});	
-	}
-		 
-
-	//console.log(param);
-	
-	
-});
-
 
 // Add novos medicos no DB
 apiRoutes.post('/doctors', function(req, res, next) {
@@ -589,6 +682,20 @@ apiRoutes.post('/doctors', function(req, res, next) {
 	});
 });
 
+/*
+// Add novos medicos no DB
+apiRoutes.post('/doctors', function(req, res, next) {
+
+	var doctor = new Person(req.body);
+	doctor.save(function(err) {
+		if (err){
+			//throw err;			
+			res.json(err);
+		} 			
+		res.json(doctor);
+	});
+});*/
+
 /**
 * ===================================================================================================
 * ================================ SPECIALITIES ROUTES ==============================================
@@ -600,34 +707,6 @@ apiRoutes.get('/specialities', function(req, res) {
 		res.json(specs);
 	});
 });
-
-/**
-* ===================================================================================================
-* ===================================== ADDRESS ROUTES ==============================================
-* ===================================================================================================
-*http://api.postmon.com.br/v1/cep/95030470
-*/
-apiRoutes.route('/city')
-	.get(function(req, res, next){
-		City.find({}, function(err, cities) {
-			res.json(cities);
-		});
-	})
-	.post(function(req, res, next) {
-		var city = new City(req.body);
-					/*new City({city: "Caxias do Sul",           
-			         	 city_ibge: 4305108,
-			                 state: "RS",
-			        	state_ibge: 43
-					});*/
-		city.save(function(err) {
-			if (err){			
-				res.json(err);
-			} 				
-			res.json(city);
-		});
-	});
-
 
 
 app.use('/api', apiRoutes);
