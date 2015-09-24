@@ -149,6 +149,79 @@ apiRoutes.get('/conn', function(req, res, next){
 			   connected: connStatus });
 });
 
+apiRoutes.get('/setupSchedule', function(req, res, next){
+
+   var year       = 2015,
+       month      = 12, 
+       inicialDay = 1,
+       finalDay   = 31,
+       appointmenDuration = 15,
+       startMorningTime = 8,
+       endMorningTime = 12,
+       startAfteernoonTime = 14,
+       endAfteernoonTime = 18
+       newSchedule = new Schedule();
+	   newSchedule.doctor = objectId("55dfb017e1b6cb7c11d1c29f"), //mongoose.Schema.Types.ObjectId('55c3eeb240c3f93c13faa201'); // Pompeu Schema.Types.ObjectId,
+       newSchedule.month  = month;
+       newSchedule.year   = year
+       hoursPerDay  = [],
+       time    = startMorningTime,
+       minutes = 0,
+       fullTime = time,
+       hours = [],
+       appointmentDate = Date(),
+       specialityAux = []; 
+
+     var query = Speciality.find().where({'description' : 'Ortopedia E Traumatologia'});
+     query.exec(function(err, result){
+        	//specialityAux = result; 
+        	newSchedule.speciality = result;
+        
+
+        //res.json(specialityAux);
+
+	while (fullTime <= endAfteernoonTime) {          
+		if ((time + (minutes / 100) + (appointmenDuration / 100)) < (time + 0.6) ){
+            minutes += appointmenDuration;
+
+	 	} else {
+	 		minutes += appointmenDuration - 60;
+    		time++;
+	 	}
+
+	 	fullTime = time + (minutes / 100);
+
+	 	if (fullTime >= endMorningTime && fullTime < startAfteernoonTime) {
+	 		time = startAfteernoonTime;
+	 		minutes = 0;
+	 		fullTime = time;
+	 	}
+
+		if (fullTime < endAfteernoonTime){
+          hours = new Object();
+          hours.hour = time + ":" + minutes;
+          //Atribui horas.
+          hoursPerDay.push(hours);
+       }	
+    } //While 
+    
+    for (currenteDay = 1; currenteDay <= 31; currenteDay++){
+        appointmentDate = new Date(year,month-1,currenteDay);
+       //somente dias de semana
+        if (appointmentDate.getDay () > 0 && appointmentDate.getDay () < 6){
+
+        	//Atribui dias.
+            newSchedule.scheduleDate.push({day : currenteDay,
+            							   scheduleTime: hoursPerDay});
+	    }
+	}   
+	newSchedule.save(function(err){
+		res.json(newSchedule);
+	});	
+
+	}); // especialidade
+});
+
 /**
 * ===================================================================================================
 * ======================================= USERS ROUTES ==============================================
@@ -208,7 +281,10 @@ apiRoutes.post('/schedule', function(req, res, next) {
 	    schFree   = [],
 		testeReg = 0,
 		lgPaciente = 0,
-		freeTime = new Schedule();
+		freeTime = new Schedule()
+		today = new Date();
+
+		console.log("@POA 1 " + today.getDate());
 
 	//Filtra horarios disponiveis by DoctorId
 	Schedule.find({'month'  : {$gte: parShearch.monthIni, $lte: parShearch.monthEnd},
@@ -219,7 +295,8 @@ apiRoutes.post('/schedule', function(req, res, next) {
 			   	scheduleFind.scheduleDate.forEach(function(result){
 			   		//Verifica intervalo de dias selecionado.			   					   		
 			   		if(result.day >= parShearch.dayIni 
-			   				&& result.day <= parShearch.dayEnd){		   		 
+			   				&& result.day <= parShearch.dayEnd){
+			   				//&& result.day >= today.getDate()){		   		 
 			   		 	// Limpa lista de horarios do dia anterior....
 			   		 	freeHours = [];
 			   		 	// Varre as os horarios disponivels para retorno
@@ -292,6 +369,12 @@ apiRoutes.get('/schedule/:userId', function(req, res, next) {
 		lastDoctor   = objectId(), 
 		query;
 
+	function getDocInfo(retorno){
+
+		Person.pre
+
+	}
+
 	/*
 	query
 	query.exec(function (err, person) {
@@ -304,14 +387,16 @@ apiRoutes.get('/schedule/:userId', function(req, res, next) {
 	Schedule.find({'month'  : {$gte: month},
 				   'year'   : {$gte: dateTime.getFullYear()} }, function(err, scheduleFind){	
 
-		Person.findOne({ _id: scheduleFind.doctor})
-						  .select('name lastname')
-						  .exec(function (err, doctor) {	
+		//Person.findOne({ _id: objectId(scheduleFind.doctor)}, 
+							//{$select:'name lastname'}, function(err, doctor){
+						  
 
 			scheduleFind.forEach(function(scheduleFind){	
+
 				/*Person.findOne({ _id: scheduleFind.doctor})
 					  .select('name lastname')
-					  .exec(function (err, doctor) {*/			
+					  .exec(function(err, doctor) {	*/	
+					  	
 				   	scheduleFind.scheduleDate.forEach(function(result){	
 				   	
 				   		 	appmtHours = []; // Limpa lista de horarios do dia anterior....			   		 	
@@ -324,22 +409,26 @@ apiRoutes.get('/schedule/:userId', function(req, res, next) {
 				   			});
 				   		
 				   			if(appmtHours.length > 0){			   	
-					   				appointments.push({'date' : result.day+'/'+scheduleFind.month+'/'+scheduleFind.year,
-					   							  'doctorId' : scheduleFind.doctor,
-					   							 'doctorName': doctor.name + ' ' + doctor.lastname,
-					   							       '_id' : result._id,				   						  
-					   					      'scheduleTime' : appmtHours});				   				
+					   				appointments.push({'date' : scheduleFind.month+'/'+result.day+'/'+scheduleFind.year,
+					   						     'screenDate' : result.day+'/'+scheduleFind.month+'/'+scheduleFind.year,
+					   							   'doctorId' : scheduleFind.doctor,
+					   							 //'doctorName': doctor.name + ' ' + doctor.lastname,
+					   							 'doctorName' : scheduleFind.docName,
+					   							 'speciality' : scheduleFind.speciality,
+					   							        '_id' : result._id,				   						  
+					   		 	    		   'scheduleTime' : appmtHours});				   				
 				   			}
 			   		}); //Foreach do dia
 
 					//Retorna horaris disponivel para seleção de consulta
 					//res.json(appointments); // teste MMenegat 
+
 				//}); //FindOne Doctor Teste MMenegat
 
 			}); // Foreach do Find			
 
-			res.json(appointments); // teste MMenegat 
-		});
+			//res.json(appointments); // teste MMenegat 
+		//});
 			
 	}); // Find	
 });
