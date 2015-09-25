@@ -137,6 +137,7 @@ apiRoutes.use(function(req, res, next) {
 	}*/
 
  	res.header("Access-Control-Allow-Origin", "*");
+ 	res.header("Access-Control-Allow-Methods", "GET,POST,PUT");
  	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 	next();
 });
@@ -353,6 +354,43 @@ apiRoutes.post('/appointment', function(req, res, next) {
         } // else !err       
     });
 });//Post Schedule
+
+//Salva Consulta
+apiRoutes.put('/appointment', function(req, res, next) {
+    //console.log(req.body);
+    var param  =  req.body,
+        result = {};          
+
+    console.log(param);
+    
+    Schedule.find({'scheduleDate.scheduleTime._id': param._hourId}, //objectId("5604010a778521840de5f883")}, //}, 
+                  {"scheduleDate.scheduleTime.$"  : true }, function(err, schedule){      
+       if(!err){
+           schedule.forEach(function(schdlDate){
+                schdlDate.scheduleDate.forEach(function(schdlTime){
+                    schdlTime.scheduleTime.forEach(function(freeHours){                        
+                        if(freeHours._id == param._hourId){ //'5604010a778521840de5f883'  param._hourId                           
+                        	freeHours.status  = param.status; // 
+                            freeHours.ranking = param.rating; // 
+                            //Gera update na base de dados...
+                            Schedule.update({ '_id' : schdlDate._id,                               
+                                     'scheduleDate.scheduleTime._id' : param._hourId}, //objectId("5604010a778521840de5f883")  param._hourId
+                                      {$set : {'scheduleDate.$.scheduleTime' : schdlTime.scheduleTime }}, function(err, isUpdated){
+                                      res.send(isUpdated);
+                            });
+                        }
+                    });
+                });
+           });
+        }else{
+            result = {success: false,
+                        error: handleError(err)};
+        } // else !err       
+    });
+});//Post Schedule
+
+
+
 // Get by Id Benef
 apiRoutes.get('/schedule/:userId', function(req, res, next) {
 
@@ -408,13 +446,13 @@ apiRoutes.get('/schedule/:userId', function(req, res, next) {
 				   				} 						   				
 				   			});
 				   		
-				   			console.log(scheduleFind);
+				   			//console.log(scheduleFind);
 				   			if(appmtHours.length > 0){			   	
 					   				appointments.push({'date' : scheduleFindSec.month+'/'+result.day+'/'+scheduleFindSec.year,
 					   						     'screenDate' : result.day+'/'+scheduleFindSec.month+'/'+scheduleFindSec.year,
 					   							   'doctorId' : scheduleFindSec.doctor,
 					   							 //'doctorName': doctor.name + ' ' + doctor.lastname,
-					   							 'doctorName' : 'scheduleFindSec.docName',
+					   							 'doctorName' : scheduleFindSec.docName,
 					   							 //'speciality' : scheduleFind.specdesc,
 					   							        '_id' : result._id,				   						  
 					   		 	    		   'scheduleTime' : appmtHours});				   				
