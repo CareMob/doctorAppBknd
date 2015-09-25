@@ -428,13 +428,13 @@ apiRoutes.get('/schedule/:userId', function(req, res, next) {
 		//Person.findOne({ _id: objectId(scheduleFind.doctor)}, 
 							//{$select:'name lastname'}, function(err, doctor){
 						  
-
+			
 			scheduleFind.forEach(function(scheduleFindSec){	
 
 				/*Person.findOne({ _id: scheduleFind.doctor})
 					  .select('name lastname')
 					  .exec(function(err, doctor) {	*/	
-					  	
+					  						  	
 				   	scheduleFindSec.scheduleDate.forEach(function(result){	
 				   	
 				   		 	appmtHours = []; // Limpa lista de horarios do dia anterior....			   		 	
@@ -445,15 +445,13 @@ apiRoutes.get('/schedule/:userId', function(req, res, next) {
 				   					appmtHours.push(hours);			   					
 				   				} 						   				
 				   			});
-				   		
-				   			//console.log(scheduleFind);
+				   			
 				   			if(appmtHours.length > 0){			   	
 					   				appointments.push({'date' : scheduleFindSec.month+'/'+result.day+'/'+scheduleFindSec.year,
 					   						     'screenDate' : result.day+'/'+scheduleFindSec.month+'/'+scheduleFindSec.year,
-					   							   'doctorId' : scheduleFindSec.doctor,
-					   							 //'doctorName': doctor.name + ' ' + doctor.lastname,
-					   							 'doctorName' : scheduleFindSec.docName,
-					   							 //'speciality' : scheduleFind.specdesc,
+					   							   'doctorId' : scheduleFindSec.doctor,					   							 
+					   							 'doctorName' : scheduleFindSec.docName,  // Paliativo
+					   							 'speciality' : scheduleFindSec.specdesc, // Paliativo
 					   							        '_id' : result._id,				   						  
 					   		 	    		   'scheduleTime' : appmtHours});				   				
 				   			}

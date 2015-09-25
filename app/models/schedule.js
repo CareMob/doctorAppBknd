@@ -26,6 +26,8 @@ module.exports = mongoose.model('Schedule', new Schema({
 // Seta um modelo ('tabela') atribuindo ao module.exports
 module.exports = mongoose.model('Schedule', new Schema({ 
     doctor: String, //Schema.Types.ObjectId,
+   docName: String, //Paliativo
+  specdesc: String, //Paliativo
 speciality: [{}],
      month: Number,
       year: Number,
