@@ -369,13 +369,13 @@ apiRoutes.get('/schedule/:userId', function(req, res, next) {
 		lastDoctor   = objectId(), 
 		query;
 
-	function getDocInfo(retorno){
+	/*function getDocInfo(retorno){
 
 		Person.pre
 
 	}
 
-	/*
+	
 	query
 	query.exec(function (err, person) {
   			if (err) return handleError(err);
@@ -391,13 +391,13 @@ apiRoutes.get('/schedule/:userId', function(req, res, next) {
 							//{$select:'name lastname'}, function(err, doctor){
 						  
 
-			scheduleFind.forEach(function(scheduleFind){	
+			scheduleFind.forEach(function(scheduleFindSec){	
 
 				/*Person.findOne({ _id: scheduleFind.doctor})
 					  .select('name lastname')
 					  .exec(function(err, doctor) {	*/	
 					  	
-				   	scheduleFind.scheduleDate.forEach(function(result){	
+				   	scheduleFindSec.scheduleDate.forEach(function(result){	
 				   	
 				   		 	appmtHours = []; // Limpa lista de horarios do dia anterior....			   		 	
 				   			result.scheduleTime.forEach(function(hours){ // Varre as os horarios disponivels para retorno
@@ -408,13 +408,14 @@ apiRoutes.get('/schedule/:userId', function(req, res, next) {
 				   				} 						   				
 				   			});
 				   		
+				   			console.log(scheduleFind);
 				   			if(appmtHours.length > 0){			   	
-					   				appointments.push({'date' : scheduleFind.month+'/'+result.day+'/'+scheduleFind.year,
-					   						     'screenDate' : result.day+'/'+scheduleFind.month+'/'+scheduleFind.year,
-					   							   'doctorId' : scheduleFind.doctor,
+					   				appointments.push({'date' : scheduleFindSec.month+'/'+result.day+'/'+scheduleFindSec.year,
+					   						     'screenDate' : result.day+'/'+scheduleFindSec.month+'/'+scheduleFindSec.year,
+					   							   'doctorId' : scheduleFindSec.doctor,
 					   							 //'doctorName': doctor.name + ' ' + doctor.lastname,
-					   							 'doctorName' : scheduleFind.docName,
-					   							 'speciality' : scheduleFind.speciality,
+					   							 'doctorName' : 'scheduleFindSec.docName',
+					   							 //'speciality' : scheduleFind.specdesc,
 					   							        '_id' : result._id,				   						  
 					   		 	    		   'scheduleTime' : appmtHours});				   				
 				   			}
@@ -427,7 +428,7 @@ apiRoutes.get('/schedule/:userId', function(req, res, next) {
 
 			}); // Foreach do Find			
 
-			//res.json(appointments); // teste MMenegat 
+			res.json(appointments); // teste MMenegat 
 		//});
 			
 	}); // Find	
