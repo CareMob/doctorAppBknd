@@ -29,10 +29,42 @@ var corsOptions = {
   origin: 'http://localhost:8100'
 };
 
-// Criar uma lib com isso .... :     
+// ADD em Libs ... :     
 String.prototype.toProperCase = function () {
     return this.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 };
+//appointmentStatusEnum = function(param){
+	/* -------------- Status ------------|
+  | Cod | Desc          | by who?      |
+  |  00 | marcada       | Admin/user   |
+  |  01 | Confirmada    | Admin        |
+  |  02 | Cancelada     | User         |
+  |  03 | Realizada     | User/Admin   | 
+  |  04 | Não Realizada | User/Admin   |56040e7a9569d76c06456d2e
+  |------------------------------------|*/
+	var statusEnum = {HIT: 0,
+			    CONFIRMED: 1,
+			     CANCELED: 2,
+			     REALIZED: 3,
+			  NOTREALIZED: 4, 
+			   properties: {
+						0: {description: "Marcada",       value: 0, code: "H"},
+						1: {description: "Confirmada",    value: 1, code: "C"},
+						2: {description: "Cancelada",     value: 2, code: "D"},
+						3: {description: "Realizada",     value: 3, code: "R"},
+						4: {description: "Não Realizada", value: 4, code: "N"}
+				  }
+				};
+/*
+	//Get by Desc
+	if(!isNaN(param)){
+		return statusEnum.properties[param].description;
+	}else{
+		return statusEnum;
+	}
+}*/
+
+
 // =====================================================================================================================
 /*var uristring = process.env.MONGOLAB_URI || 
   				process.env.MONGOHQ_URL  || 
@@ -285,7 +317,7 @@ apiRoutes.post('/schedule', function(req, res, next) {
 		freeTime = new Schedule()
 		today = new Date();
 
-		console.log("@POA 1 " + today.getDate());
+	//console.log("@POA 1 " + today.getDate());
 
 	//Filtra horarios disponiveis by DoctorId
 	Schedule.find({'month'  : {$gte: parShearch.monthIni, $lte: parShearch.monthEnd},
@@ -321,6 +353,96 @@ apiRoutes.post('/schedule', function(req, res, next) {
 
 }); //GET Schedule
 
+// Get by Id Benef
+apiRoutes.get('/schedule/:userId', function(req, res, next) {
+
+	if(!req.params.userId)
+		res.json({success: false});
+
+	var dateTime     = new Date,
+		month        = dateTime.getMonth() + 1,
+		appointments = [],
+		appmtHours   = [],
+		lastDoctor   = objectId(), 
+		query;
+	
+	//Filtra horarios disponiveis by userId
+	Schedule.find({'month'  : {$gte: month},
+				   'year'   : {$gte: dateTime.getFullYear()} }, function(err, scheduleFind){
+			scheduleFind.forEach(function(scheduleFindSec){	
+				   	scheduleFindSec.scheduleDate.forEach(function(result){	
+				   		 	appmtHours = []; // Limpa lista de horarios do dia anterior....			   		 	
+				   			result.scheduleTime.forEach(function(hours){ // Varre as os horarios disponivels para retorno
+				   				if(hours.pacient
+				   					&& hours.pacient == req.params.userId //"55c7f83a3edd7aa419da4fc9"
+				   					&& hours.status  == statusEnum.HIT
+				   					|| hours.status  == statusEnum.CONFIRMED ){ // !=2
+				   					appmtHours.push(hours);			   					
+				   				} 						   				
+				   			});
+				   			if(appmtHours.length > 0){			   	
+					   				appointments.push({'date' : scheduleFindSec.month+'/'+result.day+'/'+scheduleFindSec.year,
+					   						     'screenDate' : result.day+'/'+scheduleFindSec.month+'/'+scheduleFindSec.year,
+					   							   'doctorId' : scheduleFindSec.doctor,					   							 
+					   							 'doctorName' : scheduleFindSec.docName,  // Paliativo
+					   							 'speciality' : scheduleFindSec.specdesc, // Paliativo
+					   							        '_id' : result._id,				   						  
+					   		 	    		   'scheduleTime' : appmtHours});				   				
+				   			}
+			   		}); //Foreach do dia
+			}); // Foreach do Find		
+
+			res.json(appointments); // teste MMenegat 
+			
+	}); // Find	
+});
+/*-----------------------------------------------------------------------*/
+/*---------------- ROTA TEMPORARIA ------------------------------------- */
+/*-----------------------------------------------------------------------*/
+// Get by Id Benef
+apiRoutes.get('/scheduleold/:userId', function(req, res, next) {
+
+	if(!req.params.userId)
+		res.json({success: false});
+
+	var dateTime     = new Date,
+		month        = dateTime.getMonth() + 1,
+		appointments = [],
+		appmtHours   = [];
+	
+	//Filtra historico by userId
+	Schedule.find({'month'  : {$lte: month},
+				   'year'   : {$lte: dateTime.getFullYear()}}, function(err, scheduleFind){
+			scheduleFind.forEach(function(scheduleFindSec){	
+				   	scheduleFindSec.scheduleDate.forEach(function(result){	
+				   		 	appmtHours = []; // Limpa lista de horarios do dia anterior....			   		 	
+				   			result.scheduleTime.forEach(function(hours){ // Varre as os horarios disponivels para retorno
+				   				if(hours.pacient
+				   			    	&& hours.pacient == req.params.userId //"55c7f83a3edd7aa419da4fc9"
+				   					&& hours.status  != statusEnum.HIT
+				   					&& hours.status  != statusEnum.CONFIRMED ){
+				   					appmtHours.push(hours);			   					
+				   				} 						   				
+				   			});
+				   			if(appmtHours.length > 0){			   	
+					   				appointments.push({'date' : scheduleFindSec.month+'/'+result.day+'/'+scheduleFindSec.year,
+					   						     'screenDate' : result.day+'/'+scheduleFindSec.month+'/'+scheduleFindSec.year,
+					   							   'doctorId' : scheduleFindSec.doctor,					   							 
+					   							 'doctorName' : scheduleFindSec.docName,  // Paliativo
+					   							 'speciality' : scheduleFindSec.specdesc, // Paliativo
+					   							        '_id' : result._id,				   						  
+					   		 	    		   'scheduleTime' : appmtHours});				   				
+				   			}
+			   		}); //Foreach do dia
+			}); // Foreach do Find		
+
+			res.json(appointments); // teste MMenegat 
+			
+	}); // Find	
+});
+
+
+
 //Salva Consulta
 apiRoutes.post('/appointment', function(req, res, next) {
     //console.log(req.body);
@@ -355,7 +477,7 @@ apiRoutes.post('/appointment', function(req, res, next) {
     });
 });//Post Schedule
 
-//Salva Consulta
+//Altera Registro de Consulta
 apiRoutes.put('/appointment', function(req, res, next) {
     //console.log(req.body);
     var param  =  req.body,
@@ -388,87 +510,6 @@ apiRoutes.put('/appointment', function(req, res, next) {
         } // else !err       
     });
 });//Post Schedule
-
-
-
-// Get by Id Benef
-apiRoutes.get('/schedule/:userId', function(req, res, next) {
-
-	if(!req.params.userId)
-		res.json({success: false});
-	//console.log(req.query);
-	//console.log(req.params);
-	//res.json({teste: params});
-
-	var dateTime     = new Date,
-		month        = dateTime.getMonth() + 1,
-		appointments = [],
-		appmtHours   = [],
-		lastDoctor   = objectId(), 
-		query;
-
-	/*function getDocInfo(retorno){
-
-		Person.pre
-
-	}
-
-	
-	query
-	query.exec(function (err, person) {
-  			if (err) return handleError(err);
-  			doctorName.push({dctrName : person.name + ' ' + person.lastname});
-	});;
-	*/
-	
-	//Filtra horarios disponiveis by userId
-	Schedule.find({'month'  : {$gte: month},
-				   'year'   : {$gte: dateTime.getFullYear()} }, function(err, scheduleFind){	
-
-		//Person.findOne({ _id: objectId(scheduleFind.doctor)}, 
-							//{$select:'name lastname'}, function(err, doctor){
-						  
-			
-			scheduleFind.forEach(function(scheduleFindSec){	
-
-				/*Person.findOne({ _id: scheduleFind.doctor})
-					  .select('name lastname')
-					  .exec(function(err, doctor) {	*/	
-					  						  	
-				   	scheduleFindSec.scheduleDate.forEach(function(result){	
-				   	
-				   		 	appmtHours = []; // Limpa lista de horarios do dia anterior....			   		 	
-				   			result.scheduleTime.forEach(function(hours){ // Varre as os horarios disponivels para retorno
-				   				if(hours.pacient
-				   					&& hours.pacient == req.params.userId //"55c7f83a3edd7aa419da4fc9"
-				   					&& hours.status  != 2 ){
-				   					appmtHours.push(hours);			   					
-				   				} 						   				
-				   			});
-				   			
-				   			if(appmtHours.length > 0){			   	
-					   				appointments.push({'date' : scheduleFindSec.month+'/'+result.day+'/'+scheduleFindSec.year,
-					   						     'screenDate' : result.day+'/'+scheduleFindSec.month+'/'+scheduleFindSec.year,
-					   							   'doctorId' : scheduleFindSec.doctor,					   							 
-					   							 'doctorName' : scheduleFindSec.docName,  // Paliativo
-					   							 'speciality' : scheduleFindSec.specdesc, // Paliativo
-					   							        '_id' : result._id,				   						  
-					   		 	    		   'scheduleTime' : appmtHours});				   				
-				   			}
-			   		}); //Foreach do dia
-
-					//Retorna horaris disponivel para seleção de consulta
-					//res.json(appointments); // teste MMenegat 
-
-				//}); //FindOne Doctor Teste MMenegat
-
-			}); // Foreach do Find			
-
-			res.json(appointments); // teste MMenegat 
-		//});
-			
-	}); // Find	
-});
 
 /**
 * ===================================================================================================
