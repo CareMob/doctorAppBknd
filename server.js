@@ -262,13 +262,34 @@ apiRoutes.get('/setupSchedule', function(req, res, next){
 */
 // Add novos Users no DB
 apiRoutes.route('/person')
-	.post(function(req, res, next) {
-		var person = new Person(req.body);
-		person.save(function(err) {
-			if (err) res.json(err);
-			//console.log(person);	
-			res.send(person);
+	.post(function(req, res, next) {		
+		
+		var newPerson = new Person(req.body);		
+		
+		Person.findOne({'userId': newPerson.userId}, function(err, user){
+			//console.log(err);
+			if(user){
+				//updateNewUser(user);
+				user.verfifyID = newPerson.verfifyID;
+				user.save(function(err){
+					if(err)
+						res.json(err);				
+					res.send(person);
+				});
+
+			}
+			else saveNewUser(newPerson);
 		});
+
+		saveNewUser = function(param){
+			newPerson.save(function(err) {
+				if (err) 
+					res.json(err);				
+				res.send(person);
+			});
+		};		
+
+		/**/
 	}); //Post person
 
 apiRoutes.route('/person/:id')
