@@ -265,31 +265,31 @@ apiRoutes.route('/person')
 	.post(function(req, res, next) {		
 		
 		var newPerson = new Person(req.body);		
-		
 		Person.findOne({'userId': newPerson.userId}, function(err, user){
 			//console.log(err);
-			if(user){
-				//updateNewUser(user);
+			if(user){				
+				//console.log("Atualzia user");
 				user.verfifyID = newPerson.verfifyID;
 				user.save(function(err){
 					if(err)
 						res.json(err);				
-					res.send(person);
+					res.send(user);
 				});
 
 			}
-			else saveNewUser(newPerson);
+			else saveNewUser();
 		});
 
-		saveNewUser = function(param){
+		saveNewUser = function(){
+			//console.log("SALVA user");
 			newPerson.save(function(err) {
 				if (err) 
 					res.json(err);				
-				res.send(person);
+				res.send(newPerson);
 			});
 		};		
 
-		/**/
+		
 	}); //Post person
 
 apiRoutes.route('/person/:id')
