@@ -273,7 +273,7 @@ apiRoutes.route('/person')
 				user.save(function(err){
 					if(err)
 						res.json(err);				
-					res.send(user);
+					res.end(user);
 				});
 
 			}
@@ -285,7 +285,7 @@ apiRoutes.route('/person')
 			newPerson.save(function(err) {
 				if (err) 
 					res.json(err);				
-				res.send(newPerson);
+				res.end(newPerson);
 			});
 		};		
 
