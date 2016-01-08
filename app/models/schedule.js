@@ -34,7 +34,7 @@ speciality: [{}],
     scheduleDate:[{
         day : Number,
         scheduleTime : [{hour : String,
-                    pacient: Schema.Types.ObjectId,
+                    pacient: {type: Schema.Types.ObjectId, ref: 'Person'},
                      status: Number,
                     ranking: Number
         }]

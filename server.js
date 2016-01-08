@@ -184,8 +184,10 @@ apiRoutes.get('/conn', function(req, res, next){
 
 apiRoutes.get('/setupSchedule', function(req, res, next){
 
-   var year       = 2015,
-       month      = 12, 
+   var year          = 2016,
+       monthIni      = 01,
+       monthend      = 12,
+
        inicialDay = 1,
        finalDay   = 31,
        appointmenDuration = 15,
@@ -193,67 +195,150 @@ apiRoutes.get('/setupSchedule', function(req, res, next){
        endMorningTime = 12,
        startAfteernoonTime = 14,
        endAfteernoonTime = 18
-       newSchedule = new Schedule();
-	   newSchedule.doctor = objectId("55dfb017e1b6cb7c11d1c29f"), //mongoose.Schema.Types.ObjectId('55c3eeb240c3f93c13faa201'); // Pompeu Schema.Types.ObjectId,
-       newSchedule.month  = month;
-       newSchedule.year   = year
        hoursPerDay  = [],
        time    = startMorningTime,
        minutes = 0,
        fullTime = time,
        hours = [],
        appointmentDate = Date(),
-       specialityAux = []; 
+       specialityAux = [];
 
-     var query = Speciality.find().where({'description' : 'Ortopedia E Traumatologia'});
-     query.exec(function(err, result){
-        	//specialityAux = result; 
-        	newSchedule.speciality = result;
-        
+    for(month = monthIni; month <= monthend; month++){ //Intervalo de meses para o ano em questão.
 
-        //res.json(specialityAux);
+       newSchedule = new Schedule();
+	     newSchedule.doctor = objectId("55dfb017e1b6cb7c11d1c29f"), //mongoose.Schema.Types.ObjectId('55c3eeb240c3f93c13faa201'); // Pompeu Schema.Types.ObjectId,
+       newSchedule.month  = month;
+       newSchedule.year   = year
 
-	while (fullTime <= endAfteernoonTime) {          
-		if ((time + (minutes / 100) + (appointmenDuration / 100)) < (time + 0.6) ){
-            minutes += appointmenDuration;
+	     var query = Speciality.find().where({'description' : 'Ortopedia E Traumatologia'});
+	     query.exec(function(err, result){
+	        //specialityAux = result;
+	        newSchedule.speciality = result;
 
-	 	} else {
-	 		minutes += appointmenDuration - 60;
-    		time++;
-	 	}
+	        //res.json(specialityAux);
 
-	 	fullTime = time + (minutes / 100);
+			while (fullTime <= endAfteernoonTime) {
+				if ((time + (minutes / 100) + (appointmenDuration / 100)) < (time + 0.6) ){
+		            minutes += appointmenDuration;
 
-	 	if (fullTime >= endMorningTime && fullTime < startAfteernoonTime) {
-	 		time = startAfteernoonTime;
-	 		minutes = 0;
-	 		fullTime = time;
-	 	}
+			 	} else {
+			 		minutes += appointmenDuration - 60;
+		    		time++;
+			 	}
 
-		if (fullTime < endAfteernoonTime){
-          hours = new Object();
-          hours.hour = time + ":" + minutes;
-          //Atribui horas.
-          hoursPerDay.push(hours);
-       }	
-    } //While 
-    
-    for (currenteDay = 1; currenteDay <= 31; currenteDay++){
-        appointmentDate = new Date(year,month-1,currenteDay);
-       //somente dias de semana
-        if (appointmentDate.getDay () > 0 && appointmentDate.getDay () < 6){
+			 	fullTime = time + (minutes / 100);
 
-        	//Atribui dias.
-            newSchedule.scheduleDate.push({day : currenteDay,
-            							   scheduleTime: hoursPerDay});
-	    }
-	}   
-	newSchedule.save(function(err){
-		res.json(newSchedule);
-	});	
+			 	if (fullTime >= endMorningTime && fullTime < startAfteernoonTime) {
+			 		time = startAfteernoonTime;
+			 		minutes = 0;
+			 		fullTime = time;
+			 	}
 
-	}); // especialidade
+				if (fullTime < endAfteernoonTime){
+		          hours = new Object();
+		          hours.hour = time + ":" + minutes;
+		          //Atribui horas.
+		          hoursPerDay.push(hours);
+		       }
+		    } //While
+
+		    for (currenteDay = 1; currenteDay <= 31; currenteDay++){
+		        appointmentDate = new Date(year,month-1,currenteDay);
+		       //somente dias de semana
+		        if (appointmentDate.getDay () > 0 && appointmentDate.getDay () < 6){
+
+		        	//Atribui dias.
+		            newSchedule.scheduleDate.push({day : currenteDay,
+		            							   scheduleTime: hoursPerDay});
+			    }
+			}
+			newSchedule.save(function(err){
+				res.json(newSchedule);
+			});
+
+		}); // especialidade
+	} // 'for'  dos meses
 });
+
+/* @AKI -- TESTES MENEGAT */ 
+// Get by Id Benef
+apiRoutes.get('/events/', function(req, res, next) {
+
+	/*if(!req.params.userId)
+		res.json({success: false});*/
+
+	var dateTime     = new Date,
+		month        = dateTime.getMonth() + 1,
+		appointments = [],
+		appmtHours   = [],
+		lastDoctor   = objectId(), 
+		query;
+	
+	//Filtra horarios disponiveis by userId
+	Schedule.find({'month'  : {$gte: month},
+				   'year'   : {$gte: dateTime.getFullYear()}
+				  }) //, function(err, scheduleFind){
+		
+			.populate('scheduleDate.scheduleTime.pacient') // only return the Persons name 
+			.exec(function(err, scheduleFind){
+
+			scheduleFind.forEach(function(scheduleFindSec){	
+
+				   	scheduleFindSec.scheduleDate.forEach(function(result){	
+
+				   		 	appmtHours = []; // Limpa lista de horarios do dia anterior....			   		 	
+
+				   			result.scheduleTime.forEach(function(hours){ // Varre as os horarios disponivels para retorno
+
+				   				if(hours.pacient
+				   					//&& hours.pacient == req.params.userId //"55c7f83a3edd7aa419da4fc9"
+				   					&& hours.status  == statusEnum.HIT
+				   					|| hours.status  == statusEnum.CONFIRMED ){ // !=2
+				   					appmtHours.push(hours);			   					
+				   				} 						   				
+
+				   			});
+
+				   			if(appmtHours.length > 0){			   	
+					   				appointments.push({'date' : scheduleFindSec.month+'/'+result.day+'/'+scheduleFindSec.year,
+					   						     'screenDate' : result.day+'/'+scheduleFindSec.month+'/'+scheduleFindSec.year,
+					   							   'doctorId' : scheduleFindSec.doctor,					   							 
+					   							 'doctorName' : scheduleFindSec.docName,  // Paliativo
+					   							 'speciality' : scheduleFindSec.specdesc, // Paliativo
+					   							        '_id' : result._id,				   						  
+					   		 	    		   'scheduleTime' : appmtHours});				   				
+				   			}
+
+			   		}); //Foreach do dia
+
+			}); // Foreach do Find		
+
+			res.json(appointments); // teste MMenegat 
+			
+	}); // Find	
+
+});
+
+apiRoutes.route('/testecav03').get(function(req, res, next){ 
+
+		Schedule.findOne({month : '9' })
+			.populate('scheduleDate.scheduleTime.pacient') // only return the Persons name 
+			.exec(function (err, schedule) { 
+				if (err) return handleError(err); 
+				console.log('The creator is %s', schedule.doctor); // prints "The creator is Aaron" 
+
+				schedule.scheduleDate.forEach(function(result){ 
+
+					result.scheduleTime.forEach(function(hours){ 
+						console.log(hours.pacient.name); 
+						res.json(hours.pacient); 
+					}); 
+
+				}); 
+
+			}); 
+
+}); // Get Teste Cav 3 
 
 /**
 * ===================================================================================================
