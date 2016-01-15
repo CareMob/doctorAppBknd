@@ -570,7 +570,7 @@ apiRoutes.post('/appointment', function(req, res, next) {
                                     //'scheduleDate._id' : ObjectId("55dbbfaaa6f1da981dd0a527"),
                                      'scheduleDate.scheduleTime._id' : param._hourId}, //objectId("55dfb017e1b6cb7c11d1c499")
                                       {$set : {'scheduleDate.$.scheduleTime' : schdlTime.scheduleTime }}, function(err, isUpdated){
-                                      res.send(isUpdated)
+                                      res.json(isUpdated)
                                 });
                         }
                     });
@@ -604,7 +604,7 @@ apiRoutes.put('/appointment', function(req, res, next) {
                             Schedule.update({ '_id' : schdlDate._id,                               
                                      'scheduleDate.scheduleTime._id' : param._hourId}, //objectId("5604010a778521840de5f883")  param._hourId
                                       {$set : {'scheduleDate.$.scheduleTime' : schdlTime.scheduleTime }}, function(err, isUpdated){
-                                      res.send(isUpdated);
+                                      res.json(isUpdated);
                             });
                         }
                     });
