@@ -431,7 +431,7 @@ apiRoutes.get('/scheduleold/:userId', function(req, res, next) {
 		appmtHours   = [];
 	
 	//Filtra historico by userId
-	Schedule.find({'month'  : {$lte: month},
+	Schedule.find( //{'month'  : {$lte: month}, //Alterado para testes em dev... @MMenegat
 				   'year'   : {$lte: dateTime.getFullYear()}}, function(err, scheduleFind){
 			scheduleFind.forEach(function(scheduleFindSec){	
 				   	scheduleFindSec.scheduleDate.forEach(function(result){	
